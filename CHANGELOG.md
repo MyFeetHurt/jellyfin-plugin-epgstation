@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 (2026-10-13)
+
+- Fix: the plugin did not load on Jellyfin 12.0 / 12.1 ("NotSupported") and 10.11.0–10.11.10: it was
+  built against the newest Jellyfin libraries. It is now built against 12.0.0 and 10.11.0.
+
 ## 0.1.0 (2026-10-13)
 
 First release.
