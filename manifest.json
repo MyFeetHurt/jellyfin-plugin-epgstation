@@ -1,0 +1,29 @@
+[
+  {
+    "guid": "509fa560-d8d9-4761-9d70-0151f18660cf",
+    "versions": [
+      {
+        "version": "0.1.0.12",
+        "changelog": "First release.\n\n- Guide (地デジ / BS / CS) with genre colours and channel logos; scheduled programmes are marked.\n- Programme search by keyword (title, optionally description).\n- Schedule a recording, cancel a reservation, stop a recording in progress, un-skip a rule's skipped airing.\n- Reservation list (scheduled, conflicts, skipped) showing which Jellyfin user scheduled what.\n- Settings: EPGStation URL (+ optional basic auth), which users may use it, encode mode for new reservations.\n- English and Japanese, follows the browser language.\n- Builds for Jellyfin 10.11 and 12.x.",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/MyFeetHurt/jellyfin-plugin-epgstation/releases/download/v0.1.0/epgstation_0.1.0.12.zip",
+        "checksum": "a566d3a0d89cb2e21d9100a563ae8f8c",
+        "timestamp": "2026-10-13T12:10:07Z"
+      },
+      {
+        "version": "0.1.0.11",
+        "changelog": "First release.\n\n- Guide (地デジ / BS / CS) with genre colours and channel logos; scheduled programmes are marked.\n- Programme search by keyword (title, optionally description).\n- Schedule a recording, cancel a reservation, stop a recording in progress, un-skip a rule's skipped airing.\n- Reservation list (scheduled, conflicts, skipped) showing which Jellyfin user scheduled what.\n- Settings: EPGStation URL (+ optional basic auth), which users may use it, encode mode for new reservations.\n- English and Japanese, follows the browser language.\n- Builds for Jellyfin 10.11 and 12.x.",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/MyFeetHurt/jellyfin-plugin-epgstation/releases/download/v0.1.0/epgstation_0.1.0.11.zip",
+        "checksum": "07be91d12382adc424859f0a671f3ac9",
+        "timestamp": "2026-10-13T12:10:07Z"
+      }
+    ],
+    "name": "EPGStation",
+    "description": "Browse the EPGStation guide, search programmes, and schedule or cancel recordings from a page inside Jellyfin. Administrators choose which Jellyfin users may use it. No playback: recordings stay in EPGStation (add its recording folder as a library).",
+    "overview": "Schedule and unschedule EPGStation recordings from Jellyfin",
+    "owner": "MyFeetHurt",
+    "category": "Live TV",
+    "imageUrl": "https://raw.githubusercontent.com/MyFeetHurt/jellyfin-plugin-epgstation/main/assets/plugin.png"
+  }
+]
