@@ -426,15 +426,16 @@
   // ---------- search ----------
   $('searchForm').addEventListener('submit', ev => {
     ev.preventDefault();
-    state.lastSearch = {
+    const query = {
       keyword: $('keyword').value.trim(),
       description: $('searchDesc').checked,
       types: [...$('searchTypes').querySelectorAll('input:checked')].map(i => i.value),
     };
-    if (!state.lastSearch.types.length) {
+    if (!query.types.length) {
       toast(t('pickType'), true);
-      return;
+      return; // keep the last valid search: refreshes after Record/Cancel rerun it
     }
+    state.lastSearch = query;
     runSearch();
   });
   async function runSearch() {
