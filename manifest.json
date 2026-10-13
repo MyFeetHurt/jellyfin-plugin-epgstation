@@ -3,6 +3,22 @@
     "guid": "509fa560-d8d9-4761-9d70-0151f18660cf",
     "versions": [
       {
+        "version": "0.2.0.12",
+        "changelog": "- Rules (EPGStation's automatic recordings): new **Rules** tab to list, create, change, turn on/off\n  and delete them. The editor covers keyword, exclude words, title or full text, broadcast types or\n  channels, genres, weekdays and time, free only, skip already recorded; other rule settings (save\n  folder, encode, regex, durations...) are kept as they are. **Preview** shows what a rule would\n  record before saving. Each rule shows who created it in Jellyfin.\n- **Record series** in a programme's details: a rule prefilled with the show name and channel.\n- Search: **Make a rule from this search**.\n- Reservations made by a rule have an **Edit rule** button.\n- Setting: whether users (not only administrators) may manage rules (default: yes).",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/MyFeetHurt/jellyfin-plugin-epgstation/releases/download/v0.2.0/epgstation_0.2.0.12.zip",
+        "checksum": "46424fa218e17994dc93346f4e09e1d9",
+        "timestamp": "2026-10-13T13:32:47Z"
+      },
+      {
+        "version": "0.2.0.11",
+        "changelog": "- Rules (EPGStation's automatic recordings): new **Rules** tab to list, create, change, turn on/off\n  and delete them. The editor covers keyword, exclude words, title or full text, broadcast types or\n  channels, genres, weekdays and time, free only, skip already recorded; other rule settings (save\n  folder, encode, regex, durations...) are kept as they are. **Preview** shows what a rule would\n  record before saving. Each rule shows who created it in Jellyfin.\n- **Record series** in a programme's details: a rule prefilled with the show name and channel.\n- Search: **Make a rule from this search**.\n- Reservations made by a rule have an **Edit rule** button.\n- Setting: whether users (not only administrators) may manage rules (default: yes).",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/MyFeetHurt/jellyfin-plugin-epgstation/releases/download/v0.2.0/epgstation_0.2.0.11.zip",
+        "checksum": "5374960a8a134b8b4d6559eb2d1a82ea",
+        "timestamp": "2026-10-13T13:32:47Z"
+      },
+      {
         "version": "0.1.2.12",
         "changelog": "- Fix: \"Open the guide\" and the guide link on the settings page showed Jellyfin's \"Page not found\".\n  They now open the guide in a new tab.",
         "targetAbi": "12.0.0.0",
