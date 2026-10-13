@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2 (2026-10-13)
+
+- Fix: "Open the guide" and the guide link on the settings page showed Jellyfin's "Page not found".
+  They now open the guide in a new tab.
+
 ## 0.1.1 (2026-10-13)
 
 - Fix: the plugin did not load on Jellyfin 12.0 / 12.1 ("NotSupported") and 10.11.0–10.11.10: it was

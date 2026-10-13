@@ -93,6 +93,12 @@ def admin_page(b):
     print("admin page: url", pg.locator("#EpgStationUrl").input_value(), "| test:", pg.locator("#epgsTestResult").inner_text(),
           "| encode modes:", pg.locator("#EncodeMode option").count() - 1, "| link:", pg.locator("#epgsUserLink").inner_text())
     pg.screenshot(path=str(out / "admin.png"), full_page=True)
+    # Clicking "Open the guide" must leave jellyfin-web (0.1.1: it routed inside it -> page not found).
+    with ctx.expect_page() as new:
+        pg.locator("#epgsOpen").click()
+    guide = new.value
+    guide.wait_for_selector(".tabs button", timeout=20000)
+    print("open the guide ->", guide.url)
     ctx.close()
 
 

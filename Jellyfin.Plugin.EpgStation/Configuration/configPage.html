@@ -11,8 +11,10 @@
                 <div class="verticalSection">
                     <h2 class="sectionTitle">EPGStation</h2>
                     <p>Schedule and unschedule EPGStation recordings from Jellyfin. Users open the guide here:</p>
-                    <p><a id="epgsOpen" is="emby-linkbutton" class="raised button-submit emby-button" href="#" style="display:inline-flex">Open the guide</a></p>
-                    <p><a id="epgsUserLink" is="emby-linkbutton" class="button-link" href="#"></a></p>
+                    <!-- Plain links (not is="emby-linkbutton"): jellyfin-web routes those inside its own app,
+                         where /EpgStation/Web/ is "page not found". A new tab keeps the dashboard open. -->
+                    <p><a id="epgsOpen" class="raised button-submit emby-button" href="#" target="_blank" rel="noopener" style="display:inline-flex;text-decoration:none">Open the guide</a></p>
+                    <p><a id="epgsUserLink" class="button-link" href="#" target="_blank" rel="noopener"></a></p>
                     <p class="fieldDescription">Jellyfin shows plugin pages only to administrators, so share this link (or bookmark it) for other users. They must be signed in to Jellyfin in the same browser.</p>
                 </div>
                 <form id="EpgStationConfigForm">
