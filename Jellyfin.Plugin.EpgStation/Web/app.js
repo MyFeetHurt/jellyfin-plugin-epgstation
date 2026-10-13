@@ -26,7 +26,7 @@
       ruleHint: 'Scheduled by an EPGStation rule.', conflictHint: 'No free tuner: this will not record unless another recording is cancelled.',
       skipHint: 'Skipped: a rule matched this programme but it will not record.',
       overlapHint: 'Already recorded by another reservation.', recordingHint: 'Recording now.',
-      today: 'Today', tomorrow: 'Tomorrow', min: '{0} min', yes: 'Yes', no: 'No',
+      today: 'Today', tomorrow: 'Tomorrow', min: '{0} min', yes: 'Yes', no: 'No', pickType: 'Tick at least one of GR / BS / CS.',
       'err.ReservationManageModelAddReserveConflict': 'No free tuner at that time: it conflicts with other recordings.',
       'err.ReservationManageModelCheckReservedProgramError': 'This programme is already scheduled.',
       'err.ReservationManageModelReservedError': 'This programme is already scheduled.',
@@ -50,7 +50,7 @@
       ruleHint: 'EPGStation のルールによる予約です。', conflictHint: 'チューナーが足りません。他の予約を取り消さないと録画されません。',
       skipHint: '除外: ルールに一致しましたが録画しません。',
       overlapHint: '他の予約で録画されるため重複しています。', recordingHint: '録画中です。',
-      today: '今日', tomorrow: '明日', min: '{0}分', yes: 'はい', no: 'いいえ',
+      today: '今日', tomorrow: '明日', min: '{0}分', yes: 'はい', no: 'いいえ', pickType: 'GR / BS / CS のどれかを選んでください。',
       'err.ReservationManageModelAddReserveConflict': 'チューナーが足りません（他の予約と競合します）。',
       'err.ReservationManageModelCheckReservedProgramError': 'この番組はすでに予約されています。',
       'err.ReservationManageModelReservedError': 'この番組はすでに予約されています。',
@@ -288,9 +288,11 @@
   const chName = c => c.halfWidthName || c.name;
   function channelName(id) { const c = state.allChannels.get(id); return c ? chName(c) : ''; }
 
-  async function openDetail(p, channel) {
+  // r: the reservation when known (list rows); time-specified reservations have no programme id.
+  async function openDetail(p, channel, r) {
     const dlg = $('detail');
-    const r = state.reserveByProgram.get(p.id) || null;
+    r = r || state.reserveByProgram.get(p.id) || null;
+    const isProgramme = !r || !!r.programId;
     dlg.querySelector('.dlg-head').style.setProperty('--genre', genreColor(p));
     $('dTime').textContent = md(p.startAt) + ' ' + hm(p.startAt) + '–' + hm(p.endAt) + ' (' + t('min', Math.round((p.endAt - p.startAt) / 60000)) + ')';
     $('dTitle').textContent = p.name;
@@ -301,7 +303,7 @@
     $('dActions').replaceChildren(...actionButtons(p, r, () => dlg.close()));
     if (!dlg.open) dlg.showModal();
     // The guide entry has no extended text: fetch the full programme.
-    if (p.extended === undefined && p.endAt > Date.now()) {
+    if (isProgramme && p.extended === undefined && p.endAt > Date.now()) {
       try {
         const full = await api('Programs/' + p.id);
         if (dlg.open && $('dTitle').textContent === p.name && full.extended) $('dExt').replaceChildren(...extendedBlocks(full.extended));
@@ -405,7 +407,7 @@
     } else {
       acts.push(el('span', { class: 'sub' }, t('ended')));
     }
-    return el('div', { class: 'row', style: `--genre:${genreColor(p)}`, onclick: () => openDetail(p, state.allChannels.get(p.channelId)) },
+    return el('div', { class: 'row', style: `--genre:${genreColor(p)}`, onclick: () => openDetail(p, state.allChannels.get(p.channelId), r) },
       el('div', { class: 'when' }, opts.withDate ? md(p.startAt) : null, el('b', null, hm(p.startAt) + '–' + hm(p.endAt))),
       el('div', { class: 'main' }, el('div', { class: 'title' }, badgesFor(r), p.name), el('div', { class: 'sub' }, sub)),
       el('div', { class: 'acts' }, acts));
@@ -429,6 +431,10 @@
       description: $('searchDesc').checked,
       types: [...$('searchTypes').querySelectorAll('input:checked')].map(i => i.value),
     };
+    if (!state.lastSearch.types.length) {
+      toast(t('pickType'), true);
+      return;
+    }
     runSearch();
   });
   async function runSearch() {
