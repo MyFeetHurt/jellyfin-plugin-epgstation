@@ -27,6 +27,12 @@
       skipHint: 'Skipped: a rule matched this programme but it will not record.',
       overlapHint: 'Already recorded by another reservation.', recordingHint: 'Recording now.',
       today: 'Today', tomorrow: 'Tomorrow', min: '{0} min',
+      'err.ReservationManageModelAddReserveConflict': 'No free tuner at that time: it conflicts with other recordings.',
+      'err.ReservationManageModelCheckReservedProgramError': 'This programme is already scheduled.',
+      'err.ReservationManageModelReservedError': 'This programme is already scheduled.',
+      'err.ReservationIsNotFound': 'This reservation no longer exists.',
+      'err.ProgramIsNotFound': 'This programme is no longer in the guide.',
+      'err.IPCTimeout': 'EPGStation is busy. The change may still go through: reload in a moment.',
     },
     ja: {
       guide: '番組表', search: '検索', reserves: '予約', now: '現在', keyword: 'キーワード',
@@ -45,6 +51,12 @@
       skipHint: '除外: ルールに一致しましたが録画しません。',
       overlapHint: '他の予約で録画されるため重複しています。', recordingHint: '録画中です。',
       today: '今日', tomorrow: '明日', min: '{0}分',
+      'err.ReservationManageModelAddReserveConflict': 'チューナーが足りません（他の予約と競合します）。',
+      'err.ReservationManageModelCheckReservedProgramError': 'この番組はすでに予約されています。',
+      'err.ReservationManageModelReservedError': 'この番組はすでに予約されています。',
+      'err.ReservationIsNotFound': 'この予約はもうありません。',
+      'err.ProgramIsNotFound': 'この番組は番組表にありません。',
+      'err.IPCTimeout': 'EPGStation が混み合っています。少し待ってから更新してください（処理は完了しているかもしれません）。',
     },
   };
   const lang = (navigator.language || 'en').toLowerCase().startsWith('ja') ? 'ja' : 'en';
@@ -124,7 +136,10 @@
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
     if (!res.ok) {
-      const err = new Error(data && data.error ? data.error : 'HTTP ' + res.status);
+      const code = data && data.error ? data.error : 'HTTP ' + res.status;
+      // EPGStation reports error codes (e.g. ReservationIsNotFound): show them in words when known.
+      const known = STR[lang]['err.' + code] || STR.en['err.' + code];
+      const err = new Error(known || code);
       err.status = res.status;
       throw err;
     }
@@ -133,7 +148,7 @@
 
   // ---------- state ----------
   const state = {
-    tab: 'guide', type: null, types: [], channels: new Map(), owners: {},
+    tab: 'guide', type: null, types: [], channels: new Map(), allChannels: new Map(), owners: {},
     reserveByProgram: new Map(), // programId -> {reserveId, kind: normal|conflict|skip|overlap, ruleId}
     filter: 'active',
   };
@@ -229,11 +244,12 @@
     if (seq !== guideSeq) return;
     const k = ppm();
     const height = 24 * 60 * k;
-    const cols = schedules.filter(s => s.programs.length);
+    // Only TV and radio services (ARIB type 1, 2): one-seg and data services are not worth recording.
+    const cols = schedules.filter(s => s.programs.length && state.channels.has(s.channel.id));
     const head = el('div', { class: 'g-head' }, el('div', { class: 'g-corner' }),
-      cols.map(s => el('div', { class: 'g-ch', title: s.channel.name },
+      cols.map(s => el('div', { class: 'g-ch', title: chName(s.channel) },
         s.channel.hasLogoData ? el('img', { src: API + 'Channels/' + s.channel.id + '/Logo', alt: '', loading: 'lazy' }) : null,
-        el('span', null, s.channel.name))));
+        el('span', null, chName(s.channel)))));
     const times = el('div', { class: 'g-times', style: `height:${height}px` },
       Array.from({ length: 24 }, (_, i) => el('div', { class: 'g-hour', style: `top:${i * 60 * k}px;height:${60 * k}px` }, new Date(start + i * HOUR).getHours())));
     const now = Date.now();
@@ -266,7 +282,8 @@
   }
 
   // ---------- detail dialog + actions ----------
-  function channelName(id) { const c = state.channels.get(id); return c ? c.name : ''; }
+  const chName = c => c.halfWidthName || c.name;
+  function channelName(id) { const c = state.allChannels.get(id); return c ? chName(c) : ''; }
 
   async function openDetail(p, channel) {
     const dlg = $('detail');
@@ -274,7 +291,7 @@
     dlg.querySelector('.dlg-head').style.setProperty('--genre', genreColor(p));
     $('dTime').textContent = md(p.startAt) + ' ' + hm(p.startAt) + '–' + hm(p.endAt) + ' (' + t('min', Math.round((p.endAt - p.startAt) / 60000)) + ')';
     $('dTitle').textContent = p.name;
-    $('dChan').textContent = [channel ? channel.name : channelName(p.channelId), genreName(p.genre1)].filter(Boolean).join(' · ');
+    $('dChan').textContent = [channel ? chName(channel) : channelName(p.channelId), genreName(p.genre1)].filter(Boolean).join(' · ');
     $('dDesc').textContent = p.description || '';
     $('dExt').replaceChildren();
     $('dState').replaceChildren(...stateLines(r));
@@ -371,7 +388,7 @@
     } else {
       acts.push(el('span', { class: 'sub' }, t('ended')));
     }
-    return el('div', { class: 'row', style: `--genre:${genreColor(p)}`, onclick: () => openDetail(p, state.channels.get(p.channelId)) },
+    return el('div', { class: 'row', style: `--genre:${genreColor(p)}`, onclick: () => openDetail(p, state.allChannels.get(p.channelId)) },
       el('div', { class: 'when' }, opts.withDate ? md(p.startAt) : null, el('b', null, hm(p.startAt) + '–' + hm(p.endAt))),
       el('div', { class: 'main' }, el('div', { class: 'title' }, badgesFor(r), p.name), el('div', { class: 'sub' }, sub)),
       el('div', { class: 'acts' }, acts));
@@ -403,7 +420,7 @@
     try {
       const [items] = await Promise.all([api('Search', { method: 'POST', body: state.lastSearch }), loadReserveIndex()]);
       const now = Date.now();
-      const list = (items || []).filter(p => p.endAt > now).sort((a, b) => a.startAt - b.startAt);
+      const list = (items || []).filter(p => p.endAt > now && state.channels.has(p.channelId)).sort((a, b) => a.startAt - b.startAt);
       box.replaceChildren(list.length ? el('div', { class: 'day-h', style: 'position:static' }, t('results', list.length)) : el('div', { class: 'empty' }, t('noResults')),
         ...groupByDay(list, p => rowFor(p, state.reserveByProgram.get(p.id))));
     } catch (e) {
@@ -451,8 +468,11 @@
     if (!status.configured) { notice(t('notConfigured'), true); return; }
     if (!status.connected) { notice(t('notConnected', status.error || ''), true); return; }
     const channels = await api('Channels');
-    for (const c of channels) state.channels.set(c.id, c);
-    state.types = TYPES.filter(ty => channels.some(c => c.channelType === ty));
+    for (const c of channels) {
+      state.allChannels.set(c.id, c);
+      if (c.type === 1 || c.type === 2) state.channels.set(c.id, c);
+    }
+    state.types = TYPES.filter(ty => [...state.channels.values()].some(c => c.channelType === ty));
     state.type = state.types[0] || null;
     fillGuideControls();
     fillDayHour();
