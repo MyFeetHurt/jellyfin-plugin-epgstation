@@ -228,8 +228,41 @@ public class EpgStationController : ControllerBase
     /// <returns>EPGStation reserves.</returns>
     [HttpGet("Reserves")]
     [Authorize]
-    public Task<ActionResult> GetReserves(CancellationToken cancellationToken)
-        => Forward(HttpMethod.Get, "reserves?type=all&isHalfWidth=true&limit=1000", null, cancellationToken);
+    public async Task<ActionResult> GetReserves(CancellationToken cancellationToken)
+    {
+        if (!IsAllowed)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden);
+        }
+
+        // EPGStation pages reservations (limit/offset): fetch every page, so no reservation loses
+        // its mark in the guide.
+        const int Page = 500;
+        var all = new JsonArray();
+        for (var offset = 0; ; offset += Page)
+        {
+            var res = await _client.GetAsync(Inv($"reserves?type=all&isHalfWidth=true&offset={offset}&limit={Page}"), cancellationToken);
+            if (!res.Ok)
+            {
+                return ToResult(res);
+            }
+
+            var page = JsonNode.Parse(res.Text);
+            var items = page?["reserves"]?.AsArray() ?? [];
+            var count = items.Count;
+            foreach (var item in items.ToList())
+            {
+                items.Remove(item); // a node can only have one parent
+                all.Add(item);
+            }
+
+            var total = page?["total"]?.GetValue<int>() ?? 0;
+            if (count < Page || all.Count >= total)
+            {
+                return Content(new JsonObject { ["reserves"] = all, ["total"] = all.Count }.ToJsonString(), MediaTypeNames.Application.Json);
+            }
+        }
+    }
 
     /// <summary>
     /// Reserve id lists by state in a time range, used to mark the guide.

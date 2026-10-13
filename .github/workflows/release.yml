@@ -21,10 +21,10 @@ jobs:
       - name: Check the tag
         run: |
           version=${GITHUB_REF_NAME#v}
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "tag is not on main"; exit 1; }
+          git checkout -q "$GITHUB_SHA"  # check and build the tagged commit, not main
           grep -q "<PluginVersion>$version</PluginVersion>" Jellyfin.Plugin.EpgStation/Jellyfin.Plugin.EpgStation.csproj \
             || { echo "csproj PluginVersion is not $version"; exit 1; }
-          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "tag is not on main"; exit 1; }
-          git checkout -q "$GITHUB_SHA"
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'

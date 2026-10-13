@@ -7,7 +7,9 @@ want to watch them in Jellyfin).
 
 [日本語](#日本語)
 
-![Guide](docs/guide.png)
+![Scheduling a recording from the guide, search and the reservation list, then on a phone](docs/demo.gif)
+
+Full video (1:32): [demo.mp4](https://cdn.jsdelivr.net/gh/MyFeetHurt/jellyfin-plugin-epgstation@main/docs/demo.mp4) · Screenshots: [guide](docs/guide.png) / [programme](docs/detail.png) / [reservations](docs/reserves.png) / [phone](docs/phone.png) / [settings](docs/settings.png)
 
 ## Features
 
@@ -86,7 +88,8 @@ the tag `vX.Y.Z`. The *Release* workflow builds both zips, creates the GitHub re
 them to `manifest.json` on `main`.
 
 `tools/dev/` has the scripts used for development and testing (dev VM, dev EPGStation, API and
-browser tests); they are specific to the author's network.
+browser tests); they are specific to the author's network. `tools/demo/` records the demo video
+(`prepare.py`, `record_demo.py`, `build_video.py`: headless Chromium + ffmpeg).
 
 ## License
 
@@ -97,7 +100,7 @@ GPL-3.0. Not affiliated with Jellyfin or EPGStation.
 ## 日本語
 
 Jellyfin から [EPGStation](https://github.com/l3tnun/EPGStation) の録画予約・予約取り消しを行うプラグインです。
-番組表・番組検索・録画予約・予約取り消し・録画停止ができます。再生機能はありません
+番組表・番組検索・録画予約・予約取り消し・録画停止ができます（[デモ動画](https://cdn.jsdelivr.net/gh/MyFeetHurt/jellyfin-plugin-epgstation@main/docs/demo.mp4)）。再生機能はありません
 （録画ファイルを Jellyfin で見るには、EPGStation の録画フォルダーをライブラリに追加してください）。
 
 - **番組表**（地デジ / BS / CS）: 局ロゴ、ジャンル色。予約済み・競合・除外を表示。
