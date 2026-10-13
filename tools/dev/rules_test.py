@@ -19,6 +19,7 @@ import pathlib
 import sys
 import time
 import urllib.error
+import urllib.request
 
 from playwright.sync_api import sync_playwright
 
@@ -150,6 +151,33 @@ with sync_playwright() as p:
         check(so.get("times") == [{"week": 0x3e, "start": 18, "range": 6}], f"times {so.get('times')}")
         check(so.get("ignoreKeyword") == "再放送" and so.get("keyword") == kw, "ignore keyword saved, keyword kept")
         check(r["reserveOption"]["enable"] is False and r["reserveOption"].get("allowEndLack") is True, "enable + allowEndLack kept")
+
+        # 3b. Preview of an existing rule applies its hidden conditions (here durationMax set in
+        # EPGStation directly: the editor doesn't show it, so plain preview would ignore it).
+        epgs = "http://192.168.0.132:8888/api"
+        req = urllib.request.Request(f"{epgs}/rules/{created}")
+        raw = json.loads(urllib.request.urlopen(req, timeout=30).read())
+        body = {k: raw[k] for k in ("isTimeSpecification", "searchOption", "reserveOption", "saveOption", "encodeOption") if k in raw}
+        body["searchOption"]["durationMax"] = 1
+        urllib.request.urlopen(urllib.request.Request(f"{epgs}/rules/{created}", data=json.dumps(body).encode(), method="PUT",
+                                                      headers={"Content-Type": "application/json"}), timeout=30).read()
+        edit = {"Keyword": kw, "ChannelIds": raw["searchOption"]["channelIds"], "Times": [], "Enable": False}
+        plain = plug("POST", "RulePreview", fam, edit)[1]
+        merged = plug("POST", f"RulePreview?ruleId={created}", fam, edit)[1]
+        check(len(plain) >= 1 and len(merged) == 0, f"preview: plain {len(plain)}, with the rule's durationMax {len(merged)}")
+        pg.locator("#ruleList .rule-row", has_text=kw).first.locator("button", has_text="編集").click()
+        pg.wait_for_selector("#ruleDlg[open]")
+        pg.locator("#rPreviewBtn").click()
+        pg.wait_for_selector("#rPreview .hd:not(:has-text('…'))")
+        check("ありません" in pg.locator("#rPreview .hd").inner_text(), "editor preview uses the kept condition: " + pg.locator("#rPreview .hd").inner_text())
+        # No weekday: message, nothing saved.
+        for chip in pg.locator("#rWeek .chip.on").all()[::-1]:
+            chip.click()
+        pg.locator("#rSave").click()
+        pg.wait_for_selector(".toast:has-text('曜日')")
+        check(pg.locator("#ruleDlg").get_attribute("open") is not None, "no weekday: refused, editor stays open")
+        check(plug("GET", f"Rules/{created}", fam)[1]["searchOption"].get("durationMax") == 1, "rule unchanged, durationMax kept")
+        pg.locator("#rCancel").click()
 
         # 4. Delete.
         pg.locator("#ruleList .rule-row", has_text=kw).first.locator("button", has_text="削除").click()

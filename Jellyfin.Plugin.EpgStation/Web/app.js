@@ -27,7 +27,7 @@
       editRuleBtn: 'Edit rule',
       'err.RuleNeedsKeywordOrGenre': 'Enter a keyword or pick a genre.', 'err.RuleNeedsScope': 'Pick a broadcast type or channels.',
       'err.RuleInvalid': 'The rule is not valid.', 'err.RuleIsTimeSpecified': 'Time-based rules can only be changed in EPGStation.',
-      'err.RuleIsNotFound': 'This rule no longer exists.',
+      'err.RuleIsNotFound': 'This rule no longer exists.', ruleNeedsDay: 'Pick at least one day.',
       reload: 'Reload', backToJellyfin: 'Back to Jellyfin', record: 'Record', cancel: 'Cancel recording',
       stop: 'Stop recording', unskip: 'Record again', close: 'Close', recording: 'Recording', scheduled: 'Scheduled',
       conflict: 'Conflict', skipped: 'Skipped', overlap: 'Duplicate', rule: 'Rule', by: 'by {0}',
@@ -66,7 +66,7 @@
       editRuleBtn: 'ルールを編集',
       'err.RuleNeedsKeywordOrGenre': 'キーワードを入力するか、ジャンルを選んでください。', 'err.RuleNeedsScope': '放送波か放送局を選んでください。',
       'err.RuleInvalid': 'ルールの内容が正しくありません。', 'err.RuleIsTimeSpecified': '時刻指定のルールは EPGStation で変更してください。',
-      'err.RuleIsNotFound': 'このルールはもうありません。',
+      'err.RuleIsNotFound': 'このルールはもうありません。', ruleNeedsDay: '曜日を1つ以上選んでください。',
       reload: '更新', backToJellyfin: 'Jellyfin に戻る', record: '録画予約', cancel: '予約を取り消す',
       stop: '録画を停止', unskip: '除外を解除', close: '閉じる', recording: '録画中', scheduled: '予約済み',
       conflict: '競合', skipped: '除外', overlap: '重複', rule: 'ルール', by: '{0} が予約',
@@ -691,13 +691,18 @@
     $('rChannels').replaceChildren(...items);
   }
 
+  // The rule as edited, or null (after a message) when it can't be sent.
   function ruleEdit() {
+    if (!editor.keepTimes && !editor.week) {
+      toast(t('ruleNeedsDay'), true);
+      return null;
+    }
     const start = $('rStart').value;
     let times = [];
     if (editor.keepTimes) {
       times = editor.keepTimes;
     } else if (start !== '') {
-      times = [{ week: editor.week || ALL_WEEK, start: Number(start), range: Number($('rRange').value) }];
+      times = [{ week: editor.week, start: Number(start), range: Number($('rRange').value) }];
     } else if (editor.week && editor.week !== ALL_WEEK) {
       times = [{ week: editor.week }];
     }
@@ -718,10 +723,16 @@
 
   async function previewRule() {
     const box = $('rPreview');
+    const body = ruleEdit();
+    if (!body) {
+      box.replaceChildren();
+      return;
+    }
     box.replaceChildren(el('div', { class: 'hd' }, t('loading')));
     try {
       const now = Date.now();
-      const list = (await api('RulePreview', { method: 'POST', body: ruleEdit() })).filter(p => p.endAt > now).sort((a, b) => a.startAt - b.startAt);
+      const path = 'RulePreview' + (editor.id !== null ? '?ruleId=' + editor.id : '');
+      const list = (await api(path, { method: 'POST', body })).filter(p => p.endAt > now).sort((a, b) => a.startAt - b.startAt);
       box.replaceChildren(
         el('div', { class: 'hd' + (list.length > 40 ? ' warn' : '') }, list.length ? t('previewCount', list.length) + (list.length > 40 ? ' ' + t('previewMany') : '') : t('previewNone')),
         ...list.slice(0, 12).map(p => el('div', { class: 'p-row' }, el('span', null, md(p.startAt) + ' ' + hm(p.startAt)), el('b', null, p.name + ' · ' + channelName(p.channelId)))),
@@ -737,6 +748,7 @@
     btn.disabled = true;
     try {
       const body = ruleEdit();
+      if (!body) return;
       if (editor.id === null) await api('Rules', { method: 'POST', body });
       else await api('Rules/' + editor.id, { method: 'PUT', body });
       toast(t(editor.id === null ? 'ruleAddedOk' : 'ruleSavedOk', body.keyword || ruleLabel(editor.rule || { searchOption: {} })));

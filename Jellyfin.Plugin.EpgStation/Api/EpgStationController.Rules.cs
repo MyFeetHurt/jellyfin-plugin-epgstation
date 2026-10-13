@@ -81,11 +81,12 @@ public partial class EpgStationController
     /// Programmes a rule would record (EPGStation's search with the rule's conditions).
     /// </summary>
     /// <param name="edit">The rule as edited.</param>
+    /// <param name="ruleId">The rule being edited, if any: its kept conditions (regex, durations...) apply too.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Matching programmes.</returns>
     [HttpPost("RulePreview")]
     [Authorize]
-    public async Task<ActionResult> PreviewRule([FromBody] RuleEdit edit, CancellationToken cancellationToken)
+    public async Task<ActionResult> PreviewRule([FromBody] RuleEdit edit, [FromQuery] long? ruleId, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(edit);
         if (!CanManageRules)
@@ -98,7 +99,22 @@ public partial class EpgStationController
             return RuleError(error);
         }
 
-        var body = new JsonObject { ["option"] = RuleBuilder.SearchOption(edit, null), ["isHalfWidth"] = true, ["limit"] = 300 };
+        // Same merge as UpdateRule, so the preview shows what the saved rule will record.
+        JsonObject? existing = null;
+        if (ruleId is long id)
+        {
+            var current = await _client.GetAsync(Inv($"rules/{id}"), cancellationToken);
+            if (!current.Ok)
+            {
+                return ToResult(current);
+            }
+
+            existing = JsonNode.Parse(current.Text)?["searchOption"] as JsonObject;
+        }
+
+        var option = RuleBuilder.SearchOption(edit, existing);
+        option.Remove("searchPeriods"); // a rule's own search window, not a schedules/search option
+        var body = new JsonObject { ["option"] = option, ["isHalfWidth"] = true, ["limit"] = 300 };
         return ToResult(await _client.SendAsync(HttpMethod.Post, "schedules/search", body.ToJsonString(), cancellationToken));
     }
 
