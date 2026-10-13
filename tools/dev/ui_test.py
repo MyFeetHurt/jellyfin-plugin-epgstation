@@ -106,7 +106,8 @@ with sync_playwright() as p:
     b = p.chromium.launch(executable_path="/usr/bin/chromium")
     pg = b.new_page(viewport={"width": 1400, "height": 900}, locale="ja-JP")
     errors = []
-    pg.on("pageerror", lambda e: errors.append(str(e)))
+    # Only the plugin's page: jellyfin-web 10.11.0's own login page throws a scrollTo error.
+    pg.on("pageerror", lambda e: "/EpgStation/Web/" in pg.url and errors.append(str(e)))
     sign_in(pg, CRED[name], CRED[pw])
     pg.goto(base + "/EpgStation/Web/", wait_until="networkidle")
     pg.wait_for_selector(".g-col .p", timeout=30000)
