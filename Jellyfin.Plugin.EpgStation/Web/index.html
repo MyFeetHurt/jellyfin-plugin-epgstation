@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>EPGStation</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="bar">
+  <a class="home" href="../../web/" data-i18n-title="backToJellyfin" title="Jellyfin">&#8592;</a>
+  <h1><img src="icon.svg" alt="">EPGStation</h1>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="guide" data-i18n="guide">Guide</button>
+    <button role="tab" data-tab="search" data-i18n="search">Search</button>
+    <button role="tab" data-tab="reserves" data-i18n="reserves">Scheduled</button>
+  </nav>
+  <span class="who" id="who"></span>
+</header>
+
+<div id="notice" class="notice" hidden></div>
+
+<main>
+  <section id="tab-guide" class="tab" hidden>
+    <div class="toolbar">
+      <div class="seg" id="types"></div>
+      <select id="day" aria-label="Day"></select>
+      <select id="hour" aria-label="Hour"></select>
+      <button id="now" class="btn small" data-i18n="now">Now</button>
+    </div>
+    <div class="grid-wrap" id="gridWrap">
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section id="tab-search" class="tab" hidden>
+    <form class="toolbar" id="searchForm">
+      <input id="keyword" type="search" required maxlength="200" data-i18n-placeholder="keyword" placeholder="Keyword">
+      <span class="checks" id="searchTypes"></span>
+      <label class="check"><input type="checkbox" id="searchDesc"> <span data-i18n="inDescription">Description too</span></label>
+      <button class="btn" type="submit" data-i18n="search">Search</button>
+    </form>
+    <div id="searchResults" class="list"></div>
+  </section>
+
+  <section id="tab-reserves" class="tab" hidden>
+    <div class="toolbar">
+      <div class="seg" id="reserveFilter">
+        <button data-filter="active" data-i18n="filterActive">Scheduled</button>
+        <button data-filter="conflict" data-i18n="filterConflict">Conflicts</button>
+        <button data-filter="skip" data-i18n="filterSkip">Skipped</button>
+      </div>
+      <button id="reload" class="btn small" data-i18n="reload">Reload</button>
+    </div>
+    <div id="reserveList" class="list"></div>
+  </section>
+</main>
+
+<dialog id="detail">
+  <form method="dialog" class="dlg">
+    <div class="dlg-head">
+      <div>
+        <div class="dlg-time" id="dTime"></div>
+        <h2 id="dTitle"></h2>
+        <div class="dlg-chan" id="dChan"></div>
+      </div>
+      <button class="x" value="close" aria-label="Close">&#215;</button>
+    </div>
+    <div class="dlg-state" id="dState"></div>
+    <div class="dlg-body">
+      <p id="dDesc"></p>
+      <div id="dExt"></div>
+    </div>
+    <div class="dlg-actions" id="dActions"></div>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

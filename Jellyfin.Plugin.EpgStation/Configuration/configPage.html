@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>EPGStation</title>
+</head>
+<body>
+    <div id="EpgStationConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
+        <div data-role="content">
+            <div class="content-primary">
+                <div class="verticalSection">
+                    <h2 class="sectionTitle">EPGStation</h2>
+                    <p>Schedule and unschedule EPGStation recordings from Jellyfin. Users open the guide here:</p>
+                    <p><a id="epgsUserLink" is="emby-linkbutton" class="button-link" target="_blank" href="#"></a></p>
+                    <p class="fieldDescription">Jellyfin shows plugin pages only to administrators, so share this link (or bookmark it) for other users. They must be signed in to Jellyfin in the same browser.</p>
+                </div>
+                <form id="EpgStationConfigForm">
+                    <h3 class="sectionTitle">Connection</h3>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="EpgStationUrl">EPGStation URL</label>
+                        <input id="EpgStationUrl" name="EpgStationUrl" type="url" is="emby-input" placeholder="http://192.168.0.10:8888" />
+                        <div class="fieldDescription">The address of EPGStation's web interface, as seen from the Jellyfin server.</div>
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="BasicAuthUser">Basic auth user (optional)</label>
+                        <input id="BasicAuthUser" name="BasicAuthUser" type="text" is="emby-input" autocomplete="off" />
+                    </div>
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="BasicAuthPassword">Basic auth password (optional)</label>
+                        <input id="BasicAuthPassword" name="BasicAuthPassword" type="password" is="emby-input" autocomplete="new-password" />
+                        <div class="fieldDescription">Only if EPGStation sits behind a reverse proxy with HTTP basic authentication.</div>
+                    </div>
+                    <div>
+                        <button is="emby-button" type="button" id="epgsTest" class="raised emby-button"><span>Save and test connection</span></button>
+                        <span id="epgsTestResult" style="margin-left:1em"></span>
+                    </div>
+
+                    <h3 class="sectionTitle" style="margin-top:2em">Who may schedule recordings</h3>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="AllowAllUsers" type="checkbox" is="emby-checkbox" />
+                            <span>All signed-in users</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">Administrators can always use it. Allowed users can see the guide and all reservations, schedule recordings and cancel any reservation.</div>
+                    </div>
+                    <div id="epgsUsers" class="checkboxList paperList" style="padding:.5em 1em"></div>
+
+                    <h3 class="sectionTitle" style="margin-top:2em">New reservations</h3>
+                    <div class="selectContainer">
+                        <label class="selectLabel" for="EncodeMode">Encode after recording</label>
+                        <select is="emby-select" id="EncodeMode" class="emby-select-withcolor emby-select"></select>
+                        <div class="fieldDescription">An encode mode from EPGStation's config.yml, applied to reservations made in Jellyfin.</div>
+                    </div>
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label">
+                            <input id="DeleteOriginalAfterEncode" type="checkbox" is="emby-checkbox" />
+                            <span>Delete the TS file after encoding</span>
+                        </label>
+                    </div>
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button"><span>Save</span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script type="text/javascript">
+            (function () {
+                var pluginId = '509fa560-d8d9-4761-9d70-0151f18660cf';
+                var page = document.querySelector('#EpgStationConfigPage');
+                var form = page.querySelector('#EpgStationConfigForm');
+
+                function escapeHtml(s) {
+                    return String(s).replace(/[&<>"']/g, function (c) {
+                        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                    });
+                }
+
+                function fillEncodeModes(current) {
+                    var select = page.querySelector('#EncodeMode');
+                    function render(names) {
+                        if (current && names.indexOf(current) < 0) names.push(current);
+                        select.innerHTML = '<option value="">(none)</option>' + names.map(function (n) {
+                            return '<option value="' + escapeHtml(n) + '">' + escapeHtml(n) + '</option>';
+                        }).join('');
+                        select.value = current || '';
+                    }
+                    render([]);
+                    ApiClient.getJSON(ApiClient.getUrl('EpgStation/Config')).then(function (cfg) {
+                        render((cfg.encode || []).slice());
+                    }, function () { /* not connected yet */ });
+                }
+
+                function load() {
+                    Dashboard.showLoadingMsg();
+                    var link = page.querySelector('#epgsUserLink');
+                    link.href = ApiClient.getUrl('EpgStation/Web/');
+                    link.textContent = link.href;
+                    Promise.all([ApiClient.getPluginConfiguration(pluginId), ApiClient.getUsers()]).then(function (r) {
+                        var config = r[0], users = r[1];
+                        page.querySelector('#EpgStationUrl').value = config.EpgStationUrl || '';
+                        page.querySelector('#BasicAuthUser').value = config.BasicAuthUser || '';
+                        page.querySelector('#BasicAuthPassword').value = config.BasicAuthPassword || '';
+                        page.querySelector('#AllowAllUsers').checked = config.AllowAllUsers;
+                        page.querySelector('#DeleteOriginalAfterEncode').checked = config.DeleteOriginalAfterEncode;
+                        var allowed = (config.AllowedUserIds || []).map(function (id) { return id.replace(/-/g, '').toLowerCase(); });
+                        page.querySelector('#epgsUsers').innerHTML = users.map(function (u) {
+                            var admin = u.Policy && u.Policy.IsAdministrator;
+                            var on = admin || allowed.indexOf(u.Id.replace(/-/g, '').toLowerCase()) >= 0;
+                            return '<label class="emby-checkbox-label" style="display:block;margin:.4em 0"><input type="checkbox" is="emby-checkbox" data-user-id="' + u.Id + '"' +
+                                (on ? ' checked' : '') + (admin ? ' disabled' : '') + ' /><span>' + escapeHtml(u.Name) + (admin ? ' (administrator)' : '') + '</span></label>';
+                        }).join('');
+                        toggleUsers();
+                        fillEncodeModes(config.EncodeMode);
+                        Dashboard.hideLoadingMsg();
+                    });
+                }
+
+                function toggleUsers() {
+                    page.querySelector('#epgsUsers').style.display = page.querySelector('#AllowAllUsers').checked ? 'none' : '';
+                }
+
+                function save() {
+                    Dashboard.showLoadingMsg();
+                    return ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        config.EpgStationUrl = page.querySelector('#EpgStationUrl').value.trim();
+                        config.BasicAuthUser = page.querySelector('#BasicAuthUser').value;
+                        config.BasicAuthPassword = page.querySelector('#BasicAuthPassword').value;
+                        config.AllowAllUsers = page.querySelector('#AllowAllUsers').checked;
+                        config.AllowedUserIds = Array.prototype.map.call(
+                            page.querySelectorAll('#epgsUsers input:checked:not([disabled])'),
+                            function (i) { return i.getAttribute('data-user-id'); });
+                        config.EncodeMode = page.querySelector('#EncodeMode').value;
+                        config.DeleteOriginalAfterEncode = page.querySelector('#DeleteOriginalAfterEncode').checked;
+                        return ApiClient.updatePluginConfiguration(pluginId, config);
+                    });
+                }
+
+                page.addEventListener('pageshow', load);
+                page.querySelector('#AllowAllUsers').addEventListener('change', toggleUsers);
+                page.querySelector('#epgsTest').addEventListener('click', function () {
+                    var out = page.querySelector('#epgsTestResult');
+                    out.textContent = '…';
+                    save().then(function () {
+                        Dashboard.hideLoadingMsg();
+                        return ApiClient.getJSON(ApiClient.getUrl('EpgStation/Status'));
+                    }).then(function (s) {
+                        out.textContent = !s.configured ? 'Enter a URL first.' :
+                            s.connected ? '✔ Connected to EPGStation ' + (s.epgstation && s.epgstation.version || '') : '✘ ' + (s.error || 'Not reachable');
+                        if (s.connected) fillEncodeModes(page.querySelector('#EncodeMode').value);
+                    }, function () {
+                        Dashboard.hideLoadingMsg();
+                        out.textContent = '✘ Request failed';
+                    });
+                });
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    save().then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    });
+                    return false;
+                });
+            })();
+        </script>
+    </div>
+</body>
+</html>

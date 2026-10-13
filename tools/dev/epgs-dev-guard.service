@@ -1,0 +1,8 @@
+[Unit]
+Description=Keep dev EPGStation inside tuner/storage limits
+
+[Service]
+Type=oneshot
+User=media1
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/python3 /home/media1/epgs_dev_guard.py
