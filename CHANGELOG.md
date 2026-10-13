@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0 (2026-10-13)
+
+- Rules (EPGStation's automatic recordings): new **Rules** tab to list, create, change, turn on/off
+  and delete them. The editor covers keyword, exclude words, title or full text, broadcast types or
+  channels, genres, weekdays and time, free only, skip already recorded; other rule settings (save
+  folder, encode, regex, durations...) are kept as they are. **Preview** shows what a rule would
+  record before saving. Each rule shows who created it in Jellyfin.
+- **Record series** in a programme's details: a rule prefilled with the show name and channel.
+- Search: **Make a rule from this search**.
+- Reservations made by a rule have an **Edit rule** button.
+- Setting: whether users (not only administrators) may manage rules (default: yes).
+
 ## 0.1.2 (2026-10-13)
 
 - Fix: "Open the guide" and the guide link on the settings page showed Jellyfin's "Page not found".

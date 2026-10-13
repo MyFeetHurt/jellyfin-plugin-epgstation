@@ -18,28 +18,61 @@ public sealed record ReservationOwner(string UserName, long At);
 /// Remembers which Jellyfin user created which EPGStation reservation (EPGStation has no users).
 /// Kept as reservations.json in the plugin's data folder.
 /// </summary>
-public class ReservationLog
+public class ReservationLog : OwnerLog
 {
-    private const int MaxEntries = 5000;
-    private readonly object _lock = new();
-    private readonly ILogger<ReservationLog> _logger;
-    private Dictionary<long, ReservationOwner>? _entries;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="ReservationLog"/> class.
     /// </summary>
     /// <param name="logger">Logger.</param>
     public ReservationLog(ILogger<ReservationLog> logger)
+        : base(logger, "reservations.json")
     {
-        _logger = logger;
     }
+}
 
-    private static string? FilePath => Plugin.Instance is null ? null : Path.Combine(Plugin.Instance.DataFolderPath, "reservations.json");
+/// <summary>
+/// Remembers which Jellyfin user created which EPGStation rule. Kept as rules.json.
+/// </summary>
+public class RuleLog : OwnerLog
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RuleLog"/> class.
+    /// </summary>
+    /// <param name="logger">Logger.</param>
+    public RuleLog(ILogger<RuleLog> logger)
+        : base(logger, "rules.json")
+    {
+    }
+}
+
+/// <summary>
+/// EPGStation id → Jellyfin user who created it, kept as a JSON file in the plugin's data folder.
+/// </summary>
+public abstract class OwnerLog
+{
+    private const int MaxEntries = 5000;
+    private readonly object _lock = new();
+    private readonly ILogger _logger;
+    private readonly string _fileName;
+    private Dictionary<long, ReservationOwner>? _entries;
 
     /// <summary>
-    /// Records the owner of a new reservation.
+    /// Initializes a new instance of the <see cref="OwnerLog"/> class.
     /// </summary>
-    /// <param name="reserveId">EPGStation reserve id.</param>
+    /// <param name="logger">Logger.</param>
+    /// <param name="fileName">File name in the plugin's data folder.</param>
+    protected OwnerLog(ILogger logger, string fileName)
+    {
+        _logger = logger;
+        _fileName = fileName;
+    }
+
+    private string? FilePath => Plugin.Instance is null ? null : Path.Combine(Plugin.Instance.DataFolderPath, _fileName);
+
+    /// <summary>
+    /// Records the owner of a new reservation or rule.
+    /// </summary>
+    /// <param name="reserveId">EPGStation reserve or rule id.</param>
     /// <param name="userName">Jellyfin user name.</param>
     public void Add(long reserveId, string userName)
     {

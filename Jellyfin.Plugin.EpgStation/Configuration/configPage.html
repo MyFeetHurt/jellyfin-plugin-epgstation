@@ -47,6 +47,13 @@
                         <div class="fieldDescription checkboxFieldDescription">Administrators can always use it. Allowed users can see the guide and all reservations, schedule recordings and cancel any reservation.</div>
                     </div>
                     <div id="epgsUsers" class="checkboxList paperList" style="padding:.5em 1em"></div>
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="AllowRuleManagement" type="checkbox" is="emby-checkbox" />
+                            <span>These users may also manage rules</span>
+                        </label>
+                        <div class="fieldDescription checkboxFieldDescription">Create, change and delete EPGStation rules (automatic recordings by keyword, genre, channel and time). A rule can schedule many recordings. Off: only administrators manage rules; users still record and cancel single programmes.</div>
+                    </div>
 
                     <h3 class="sectionTitle" style="margin-top:2em">New reservations</h3>
                     <div class="selectContainer">
@@ -105,6 +112,7 @@
                         page.querySelector('#BasicAuthUser').value = config.BasicAuthUser || '';
                         page.querySelector('#BasicAuthPassword').value = config.BasicAuthPassword || '';
                         page.querySelector('#AllowAllUsers').checked = config.AllowAllUsers;
+                        page.querySelector('#AllowRuleManagement').checked = config.AllowRuleManagement;
                         page.querySelector('#DeleteOriginalAfterEncode').checked = config.DeleteOriginalAfterEncode;
                         var allowed = (config.AllowedUserIds || []).map(function (id) { return id.replace(/-/g, '').toLowerCase(); });
                         page.querySelector('#epgsUsers').innerHTML = users.map(function (u) {
@@ -130,6 +138,7 @@
                         config.BasicAuthUser = page.querySelector('#BasicAuthUser').value;
                         config.BasicAuthPassword = page.querySelector('#BasicAuthPassword').value;
                         config.AllowAllUsers = page.querySelector('#AllowAllUsers').checked;
+                        config.AllowRuleManagement = page.querySelector('#AllowRuleManagement').checked;
                         config.AllowedUserIds = Array.prototype.map.call(
                             page.querySelectorAll('#epgsUsers input:checked:not([disabled])'),
                             function (i) { return i.getAttribute('data-user-id'); });

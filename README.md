@@ -19,6 +19,10 @@ Full video (1:43): [demo.mp4](https://cdn.jsdelivr.net/gh/MyFeetHurt/jellyfin-pl
 - **Record** a programme, **cancel** a reservation, **stop** a recording in progress (the part
   recorded so far is kept), **un-skip** an airing an EPGStation rule skipped.
 - **Reservation list**: scheduled, conflicts, skipped, and which Jellyfin user scheduled each one.
+- **Rules** (EPGStation's automatic recordings): list, create, change, turn on/off and delete. Keyword,
+  exclude words, channels or broadcast types, genres, weekdays and time, free only, skip already
+  recorded; **Preview** shows what a rule would record. **Record series** from a programme and
+  **Make a rule from this search** prefill the editor.
 - **All Jellyfin users** can use it, or only the users an administrator picks.
 - English and Japanese (follows the browser language), works on phones.
 - Builds for **Jellyfin 10.11** and **Jellyfin 12.x**.
@@ -57,6 +61,7 @@ Click a programme in the guide or a search result for details and the **Record**
 | EPGStation URL | Address of EPGStation (the same as its web UI). Only the Jellyfin server talks to EPGStation; browsers don't need to reach it. |
 | Basic auth | Only if EPGStation sits behind a reverse proxy with HTTP basic authentication. |
 | All signed-in users / users | Who may use the page. Administrators always can. Allowed users see all reservations and may cancel any of them: EPGStation has no users of its own. |
+| These users may also manage rules | On (default): the allowed users may create, change and delete rules too. Off: only administrators; users still record and cancel single programmes. A rule can schedule many recordings. |
 | Encode after recording | An encode mode from EPGStation's `config.yml`, added to reservations made from Jellyfin. |
 
 ## How it works
@@ -64,6 +69,13 @@ Click a programme in the guide or a search result for details and the **Record**
 The plugin adds a small REST API to Jellyfin under `/EpgStation/` that forwards a fixed set of
 calls to EPGStation's API (channels, guide, search, reservations), after checking the Jellyfin user
 is allowed. The page `/EpgStation/Web/` is plain HTML/JS embedded in the plugin.
+
+Rules: the editor sends only the fields it shows; the plugin applies them to the rule and keeps
+everything else (save folder, file name format, encode, regex, duration limits, tags). Rules made
+in EPGStation with several time windows keep them; time-based rules (a channel and clock time)
+can only be turned on/off or deleted here. A rule needs a keyword or a genre, so it can't record
+everything on a channel by mistake. Deleting a rule cancels its upcoming reservations; finished
+recordings stay.
 
 What EPGStation does on a cancel:
 - a one-off reservation is deleted;
@@ -109,6 +121,9 @@ Jellyfin から [EPGStation](https://github.com/l3tnun/EPGStation) の録画予�
 - **検索**: 番組名（概要も可）をキーワードで検索。
 - **録画予約 / 予約を取り消す / 録画を停止 / 除外を解除**。
 - **予約一覧**: 予約・競合・除外、どの Jellyfin ユーザーが予約したかを表示。
+- **ルール**（自動予約）: 一覧・作成・変更・有効/無効・削除。キーワード、除外キーワード、放送局・放送波、ジャンル、曜日と時間、
+  無料放送のみ、録画済みを除外。「検索してみる」で録画される番組を確認できます。番組の「シリーズ録画」や検索結果の
+  「この条件でルールを作成」から作成できます。ルールを管理できるユーザーは管理者が設定できます。
 - すべての Jellyfin ユーザー、または管理者が選んだユーザーが使えます。
 - 日本語 / 英語（ブラウザーの言語に従う）、スマートフォン対応。
 - Jellyfin 10.11 と 12.x 用のビルドがあります。

@@ -37,6 +37,12 @@ public class PluginConfiguration : BasePluginConfiguration
 #pragma warning restore CA1819
 
     /// <summary>
+    /// Gets or sets a value indicating whether allowed users (not only administrators) may create,
+    /// change and delete EPGStation rules.
+    /// </summary>
+    public bool AllowRuleManagement { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the EPGStation encode mode name added to new reservations ("" = none).
     /// </summary>
     public string EncodeMode { get; set; } = string.Empty;

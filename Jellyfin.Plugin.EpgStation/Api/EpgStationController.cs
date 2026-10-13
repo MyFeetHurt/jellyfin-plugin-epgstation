@@ -50,11 +50,12 @@ public class ReserveRequest
 /// </summary>
 [ApiController]
 [Route("EpgStation")]
-public class EpgStationController : ControllerBase
+public partial class EpgStationController : ControllerBase
 {
     private static readonly string[] BroadcastTypes = ["GR", "BS", "CS", "SKY"];
     private readonly EpgStationClient _client;
     private readonly ReservationLog _log;
+    private readonly RuleLog _ruleLog;
     private readonly ILogger<EpgStationController> _logger;
 
     /// <summary>
@@ -62,11 +63,13 @@ public class EpgStationController : ControllerBase
     /// </summary>
     /// <param name="client">EPGStation client.</param>
     /// <param name="log">Reservation owner log.</param>
+    /// <param name="ruleLog">Rule owner log.</param>
     /// <param name="logger">Logger.</param>
-    public EpgStationController(EpgStationClient client, ReservationLog log, ILogger<EpgStationController> logger)
+    public EpgStationController(EpgStationClient client, ReservationLog log, RuleLog ruleLog, ILogger<EpgStationController> logger)
     {
         _client = client;
         _log = log;
+        _ruleLog = ruleLog;
         _logger = logger;
     }
 
@@ -108,6 +111,7 @@ public class EpgStationController : ControllerBase
             ["userName"] = UserName,
             ["isAdmin"] = IsAdmin,
             ["allowed"] = IsAllowed,
+            ["canManageRules"] = CanManageRules,
             ["configured"] = EpgStationClient.IsConfigured,
             ["pluginVersion"] = Plugin.Instance?.Version.ToString(),
         };
@@ -235,33 +239,7 @@ public class EpgStationController : ControllerBase
             return StatusCode(StatusCodes.Status403Forbidden);
         }
 
-        // EPGStation pages reservations (limit/offset): fetch every page, so no reservation loses
-        // its mark in the guide.
-        const int Page = 500;
-        var all = new JsonArray();
-        for (var offset = 0; ; offset += Page)
-        {
-            var res = await _client.GetAsync(Inv($"reserves?type=all&isHalfWidth=true&offset={offset}&limit={Page}"), cancellationToken);
-            if (!res.Ok)
-            {
-                return ToResult(res);
-            }
-
-            var page = JsonNode.Parse(res.Text);
-            var items = page?["reserves"]?.AsArray() ?? [];
-            var count = items.Count;
-            foreach (var item in items.ToList())
-            {
-                items.Remove(item); // a node can only have one parent
-                all.Add(item);
-            }
-
-            var total = page?["total"]?.GetValue<int>() ?? 0;
-            if (count < Page || all.Count >= total)
-            {
-                return Content(new JsonObject { ["reserves"] = all, ["total"] = all.Count }.ToJsonString(), MediaTypeNames.Application.Json);
-            }
-        }
+        return await GetAllPages("reserves?type=all&isHalfWidth=true", "reserves", cancellationToken);
     }
 
     /// <summary>
@@ -416,6 +394,38 @@ public class EpgStationController : ControllerBase
     }
 
     private static string Inv(FormattableString s) => s.ToString(CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// EPGStation pages its lists (limit/offset): fetch every page, so nothing goes missing.
+    /// </summary>
+    private async Task<ActionResult> GetAllPages(string pathWithQuery, string key, CancellationToken cancellationToken)
+    {
+        const int Page = 500;
+        var all = new JsonArray();
+        for (var offset = 0; ; offset += Page)
+        {
+            var res = await _client.GetAsync(Inv($"{pathWithQuery}&offset={offset}&limit={Page}"), cancellationToken);
+            if (!res.Ok)
+            {
+                return ToResult(res);
+            }
+
+            var page = JsonNode.Parse(res.Text);
+            var items = page?[key]?.AsArray() ?? [];
+            var count = items.Count;
+            foreach (var item in items.ToList())
+            {
+                items.Remove(item); // a node can only have one parent
+                all.Add(item);
+            }
+
+            var total = page?["total"]?.GetValue<int>() ?? 0;
+            if (count < Page || all.Count >= total)
+            {
+                return Content(new JsonObject { [key] = all, ["total"] = all.Count }.ToJsonString(), MediaTypeNames.Application.Json);
+            }
+        }
+    }
 
     private static string ErrorText(EpgStationResponse res)
     {

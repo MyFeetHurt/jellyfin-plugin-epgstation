@@ -13,6 +13,21 @@
     en: {
       guide: 'Guide', search: 'Search', reserves: 'Scheduled', now: 'Now', keyword: 'Keyword',
       inDescription: 'Description too', filterActive: 'Scheduled', filterConflict: 'Conflicts', filterSkip: 'Skipped',
+      rules: 'Rules', newRule: 'New rule', editRule: 'Edit rule', edit: 'Edit', delete: 'Delete', save: 'Save', cancelEdit: 'Cancel',
+      ruleKeyword: 'Keyword', ruleIgnore: 'Exclude words', ruleScope: 'Channels', pickChannels: 'Pick channels',
+      filterChannels: 'Filter channels', ruleGenres: 'Genres (none = any)', ruleWhen: 'Days and time', anyTime: 'Any time',
+      fromHour: 'from {0}:00', hours: 'for {0} h', ruleFree: 'Free programmes only', ruleAvoid: 'Skip programmes already recorded',
+      ruleEnable: 'Enabled', rulePreview: 'Preview', previewCount: '{0} programmes would be recorded.', previewNone: 'Nothing matches right now.',
+      previewMany: 'That is a lot: check the conditions.', ruleNoKeyword: '(no keyword)', moreChannels: '+{0}', everyDay: 'every day',
+      ruleCount: '{0} scheduled', createdBy: 'created by {0}', ruleOn: 'On', ruleOff: 'Off', timeSpecified: 'Time',
+      noRules: 'No rules yet.', multiTimes: 'This rule has several time windows ({0}); they are kept as they are.',
+      confirmDeleteRule: 'Delete the rule “{0}”? Its upcoming reservations are cancelled; finished recordings stay.',
+      ruleDeletedOk: 'Rule deleted: {0}', ruleAddedOk: 'Rule added: {0}', ruleSavedOk: 'Rule saved: {0}',
+      ruleEnabledOk: 'Rule on: {0}', ruleDisabledOk: 'Rule off: {0}', recordSeries: 'Record series', makeRule: 'Make a rule from this search',
+      editRuleBtn: 'Edit rule',
+      'err.RuleNeedsKeywordOrGenre': 'Enter a keyword or pick a genre.', 'err.RuleNeedsScope': 'Pick a broadcast type or channels.',
+      'err.RuleInvalid': 'The rule is not valid.', 'err.RuleIsTimeSpecified': 'Time-based rules can only be changed in EPGStation.',
+      'err.RuleIsNotFound': 'This rule no longer exists.',
       reload: 'Reload', backToJellyfin: 'Back to Jellyfin', record: 'Record', cancel: 'Cancel recording',
       stop: 'Stop recording', unskip: 'Record again', close: 'Close', recording: 'Recording', scheduled: 'Scheduled',
       conflict: 'Conflict', skipped: 'Skipped', overlap: 'Duplicate', rule: 'Rule', by: 'by {0}',
@@ -37,6 +52,21 @@
     ja: {
       guide: '番組表', search: '検索', reserves: '予約', now: '現在', keyword: 'キーワード',
       inDescription: '概要も検索', filterActive: '予約', filterConflict: '競合', filterSkip: '除外',
+      rules: 'ルール', newRule: '新しいルール', editRule: 'ルールを編集', edit: '編集', delete: '削除', save: '保存', cancelEdit: 'キャンセル',
+      ruleKeyword: 'キーワード', ruleIgnore: '除外キーワード', ruleScope: '放送', pickChannels: '放送局を選ぶ',
+      filterChannels: '放送局を絞り込み', ruleGenres: 'ジャンル（未選択 = すべて）', ruleWhen: '曜日と時間', anyTime: '時間指定なし',
+      fromHour: '{0}時から', hours: '{0}時間', ruleFree: '無料放送のみ', ruleAvoid: '録画済みの番組は録画しない',
+      ruleEnable: '有効', rulePreview: '検索してみる', previewCount: '{0} 件が録画されます。', previewNone: '今は一致する番組がありません。',
+      previewMany: '多すぎるかもしれません。条件を確認してください。', ruleNoKeyword: '（キーワードなし）', moreChannels: '他{0}局', everyDay: '毎日',
+      ruleCount: '予約 {0} 件', createdBy: '{0} が作成', ruleOn: '有効', ruleOff: '無効', timeSpecified: '時刻指定',
+      noRules: 'ルールはまだありません。', multiTimes: '複数の時間指定があります（{0}）。変更しません。',
+      confirmDeleteRule: 'ルール「{0}」を削除しますか？ これからの予約は取り消されます。録画済みのファイルは残ります。',
+      ruleDeletedOk: 'ルールを削除しました: {0}', ruleAddedOk: 'ルールを追加しました: {0}', ruleSavedOk: 'ルールを保存しました: {0}',
+      ruleEnabledOk: 'ルールを有効にしました: {0}', ruleDisabledOk: 'ルールを無効にしました: {0}', recordSeries: 'シリーズ録画', makeRule: 'この条件でルールを作成',
+      editRuleBtn: 'ルールを編集',
+      'err.RuleNeedsKeywordOrGenre': 'キーワードを入力するか、ジャンルを選んでください。', 'err.RuleNeedsScope': '放送波か放送局を選んでください。',
+      'err.RuleInvalid': 'ルールの内容が正しくありません。', 'err.RuleIsTimeSpecified': '時刻指定のルールは EPGStation で変更してください。',
+      'err.RuleIsNotFound': 'このルールはもうありません。',
       reload: '更新', backToJellyfin: 'Jellyfin に戻る', record: '録画予約', cancel: '予約を取り消す',
       stop: '録画を停止', unskip: '除外を解除', close: '閉じる', recording: '録画中', scheduled: '予約済み',
       conflict: '競合', skipped: '除外', overlap: '重複', rule: 'ルール', by: '{0} が予約',
@@ -190,6 +220,7 @@
     try { localStorage.setItem('epgs-tab', name); } catch (e) { /* ignore */ }
     if (name === 'guide') renderGuide();
     if (name === 'reserves') renderReserves();
+    if (name === 'rules') renderRules();
   }
   document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 
@@ -338,6 +369,14 @@
       out.push(el('button', { type: 'button', class: 'btn ghost', onclick: ev => act(ev, () => cancelReserve(r), done) },
         isRecordingNow(r) ? t('stop') : t('cancel')));
     }
+    if (state.canManageRules && r && r.ruleId) {
+      out.unshift(el('button', { type: 'button', class: 'btn ghost', onclick: () => { $('detail').close(); openRuleById(r.ruleId); } }, t('editRuleBtn')));
+    } else if (state.canManageRules && !ended && (!r || r.programId)) {
+      out.unshift(el('button', { type: 'button', class: 'btn ghost', onclick: () => {
+        $('detail').close();
+        openRuleEditor(null, { keyword: seriesKeyword(p.name), channelIds: [p.channelId] });
+      } }, t('recordSeries')));
+    }
     out.push(el('button', { type: 'button', class: 'btn ghost', onclick: () => $('detail').close() }, t('close')));
     return out;
   }
@@ -392,6 +431,7 @@
     if (state.tab === 'guide') await renderGuide();
     else if (state.tab === 'reserves') await renderReserves();
     else if (state.tab === 'search' && state.lastSearch) await runSearch();
+    else if (state.tab === 'rules') await renderRules();
   }
 
   // ---------- list rows (search + reservations) ----------
@@ -445,7 +485,10 @@
       const [items] = await Promise.all([api('Search', { method: 'POST', body: state.lastSearch }), loadReserveIndex()]);
       const now = Date.now();
       const list = (items || []).filter(p => p.endAt > now && state.channels.has(p.channelId)).sort((a, b) => a.startAt - b.startAt);
-      box.replaceChildren(list.length ? el('div', { class: 'day-h', style: 'position:static' }, t('results', list.length)) : el('div', { class: 'empty' }, t('noResults')),
+      const q = state.lastSearch;
+      const makeRule = state.canManageRules ? el('button', { class: 'btn small', style: 'margin-left:12px', onclick: () =>
+        openRuleEditor(null, { keyword: q.keyword, types: q.types, fullText: q.description }) }, t('makeRule')) : null;
+      box.replaceChildren(list.length ? el('div', { class: 'day-h', style: 'position:static' }, t('results', list.length), makeRule) : el('div', { class: 'empty' }, t('noResults'), makeRule ? el('div', { style: 'margin-top:10px' }, makeRule) : null),
         ...groupByDay(list, p => rowFor(p, state.reserveByProgram.get(p.id))));
     } catch (e) {
       box.replaceChildren(el('div', { class: 'empty' }, t('error', e.message)));
@@ -473,6 +516,249 @@
     box.replaceChildren(...(list.length ? groupByDay(list, r => rowFor(r.programId ? { ...r, id: r.programId } : r, r)) : [el('div', { class: 'empty' }, t('noReserves'))]));
   }
 
+  // ---------- rules ----------
+  const WEEK_BITS = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40]; // Sunday .. Saturday (EPGStation)
+  const ALL_WEEK = 0x7f;
+  const editor = { id: null, rule: null, genres: [], keepTimes: null };
+
+  // Series keyword from a title: drop [字]【...】「...」, episode numbers and the like.
+  function seriesKeyword(name) {
+    let s = name.replace(/【[^】]*】|\[[^\]]*\]|［[^］]*］|〔[^〕]*〕|＜[^＞]*＞|<[^>]*>|〈[^〉]*〉/g, ' ');
+    s = s.split(/[「『（(▽▼◇◆＃#～~]|第\s*[0-9０-９一二三四五六七八九十百]+\s*[話回夜]/)[0];
+    s = s.replace(/\s+/g, ' ').trim().replace(/\s*[0-9０-９]+$/, '').trim();
+    // The show name comes first; later words are usually the episode ("歴史探偵 選 竹中半兵衛" ->
+    // "歴史探偵"). Skip a leading genre label ("ドラマ 相棒" -> "相棒"); keep two words when the
+    // first is a single character. The editor's preview shows what the keyword would match.
+    const LABELS = ['ドラマ', 'アニメ', '映画', '特選', '特集', '選', '新', '再', '終', '字', '解'];
+    const words = s.split(' ').filter(Boolean);
+    while (words.length > 1 && LABELS.includes(words[0])) words.shift();
+    let kw = words[0] || '';
+    if (kw.length <= 1 && words.length > 1) kw += ' ' + words[1];
+    return kw.length >= 2 ? kw : name.slice(0, 20).trim();
+  }
+
+  function ruleLabel(r) {
+    const o = r.searchOption || {};
+    if (o.keyword) return o.keyword;
+    const g = (o.genres || []).map(x => genreName(x.genre)).filter(Boolean);
+    return g.length ? g.join('・') : t('ruleNoKeyword');
+  }
+  function ruleScope(r) {
+    const o = r.searchOption || {};
+    if (o.channelIds && o.channelIds.length) {
+      const names = o.channelIds.map(id => channelName(id) || String(id));
+      return names.length > 3 ? names.slice(0, 3).join(', ') + ' ' + t('moreChannels', names.length - 3) : names.join(', ');
+    }
+    return TYPES.filter(ty => o[ty]).map(ty => (ty === 'GR' && lang === 'ja' ? '地デジ' : ty)).join(' / ');
+  }
+  function ruleWhen(r) {
+    const times = (r.searchOption || {}).times || [];
+    if (!times.length) return '';
+    return times.map(tm => {
+      const days = tm.week === ALL_WEEK ? t('everyDay') : WEEK_BITS.map((b, i) => (tm.week & b ? WD[lang][i] : '')).join('');
+      const hours = tm.start !== undefined && tm.range !== undefined ? ` ${pad(tm.start)}:00–${pad((tm.start + tm.range) % 24)}:00` : '';
+      return days + hours;
+    }).join(', ');
+  }
+
+  async function renderRules() {
+    const box = $('ruleList');
+    if (!box.children.length) box.replaceChildren(el('div', { class: 'empty' }, t('loading')));
+    let res, owners;
+    try {
+      [res, owners] = await Promise.all([api('Rules'), api('RuleOwners')]);
+    } catch (e) {
+      box.replaceChildren(el('div', { class: 'empty' }, t('error', e.message)));
+      return;
+    }
+    const rules = (res.rules || []).sort((a, b) => ruleLabel(a).localeCompare(ruleLabel(b), 'ja'));
+    if (!rules.length) {
+      box.replaceChildren(el('div', { class: 'empty' }, t('noRules')));
+      return;
+    }
+    box.replaceChildren(...rules.map(r => {
+      const on = !!(r.reserveOption && r.reserveOption.enable);
+      const owner = owners[String(r.id)];
+      const sub = [ruleScope(r), ruleWhen(r), t('ruleCount', r.reservesCnt || 0), owner ? t('createdBy', owner.UserName) : null].filter(Boolean).join(' · ');
+      const toggle = el('label', { class: 'switch', title: on ? t('ruleOn') : t('ruleOff'), onclick: ev => ev.stopPropagation() },
+        el('input', { type: 'checkbox', checked: on, onchange: ev => setRuleEnabled(r, ev.currentTarget) }), el('span'));
+      const acts = [toggle];
+      if (!r.isTimeSpecification) acts.push(el('button', { class: 'btn small', onclick: ev => { ev.stopPropagation(); openRuleEditor(r); } }, t('edit')));
+      acts.push(el('button', { class: 'btn small', onclick: ev => { ev.stopPropagation(); act(ev, () => deleteRule(r)); } }, t('delete')));
+      return el('div', { class: 'row rule-row' + (on ? '' : ' off'), onclick: () => !r.isTimeSpecification && openRuleEditor(r) },
+        el('div', { class: 'when' }, el('b', null, on ? t('ruleOn') : t('ruleOff'))),
+        el('div', { class: 'main' }, el('div', { class: 'title' }, r.isTimeSpecification ? el('span', { class: 'badge overlap' }, t('timeSpecified')) : null, ruleLabel(r)),
+          el('div', { class: 'sub' }, sub)),
+        el('div', { class: 'acts' }, acts));
+    }));
+  }
+  $('newRule').addEventListener('click', () => openRuleEditor(null));
+  $('reloadRules').addEventListener('click', () => renderRules());
+
+  async function setRuleEnabled(r, input) {
+    input.disabled = true;
+    try {
+      await api(`Rules/${r.id}/${input.checked ? 'Enable' : 'Disable'}`, { method: 'PUT' });
+      toast(t(input.checked ? 'ruleEnabledOk' : 'ruleDisabledOk', ruleLabel(r)));
+      await renderRules();
+    } catch (e) {
+      input.checked = !input.checked;
+      toast(t('error', e.message), true);
+    } finally {
+      input.disabled = false;
+    }
+  }
+  async function deleteRule(r) {
+    if (!await ask(t('confirmDeleteRule', ruleLabel(r)))) return false;
+    await api('Rules/' + r.id, { method: 'DELETE' });
+    toast(t('ruleDeletedOk', ruleLabel(r)));
+    await renderRules();
+    return true;
+  }
+
+  // Editor. prefill: {keyword, types, channelIds, fullText} for new rules.
+  function chip(label, on, onclick) {
+    return el('button', { type: 'button', class: 'chip' + (on ? ' on' : ''), onclick: ev => { ev.currentTarget.classList.toggle('on'); onclick(ev.currentTarget.classList.contains('on')); } }, label);
+  }
+  function openRuleEditor(rule, prefill) {
+    const o = (rule && rule.searchOption) || {};
+    const ro = (rule && rule.reserveOption) || {};
+    const pf = prefill || {};
+    editor.id = rule ? rule.id : null;
+    editor.rule = rule;
+    $('ruleTitle').textContent = rule ? t('editRule') : t('newRule');
+    $('rKeyword').value = rule ? (o.keyword || '') : (pf.keyword || '');
+    $('rIgnore').value = rule ? (o.ignoreKeyword || '') : '';
+    $('rFullText').checked = rule ? !!o.description : !!pf.fullText;
+    // Broadcast types / channels.
+    const chans = rule ? (o.channelIds || []) : (pf.channelIds || []);
+    const types = new Set(rule ? TYPES.filter(ty => o[ty]) : (pf.types || state.types));
+    editor.types = types;
+    $('rTypes').replaceChildren(...state.types.map(ty => chip(ty === 'GR' && lang === 'ja' ? '地デジ' : ty, types.has(ty), on => (on ? types.add(ty) : types.delete(ty)))));
+    $('rPickChannels').checked = chans.length > 0;
+    editor.channels = new Set(chans);
+    renderChannelPicker();
+    // Genres (sub genres of an existing rule are kept while their genre stays ticked).
+    editor.genres = rule ? (o.genres || []).map(g => ({ ...g })) : [];
+    $('rGenres').replaceChildren(...GENRES[lang].map((name, i) => chip(name, editor.genres.some(g => g.genre === i), on => {
+      editor.genres = editor.genres.filter(g => g.genre !== i);
+      if (on) editor.genres.push({ genre: i });
+    })));
+    // Days and time: the editor shows one window; more are kept as they are.
+    const times = o.times || [];
+    editor.keepTimes = times.length > 1 ? times : null;
+    $('rTimesNote').hidden = !editor.keepTimes;
+    $('rTimesNote').textContent = editor.keepTimes ? t('multiTimes', ruleWhen(rule)) : '';
+    const tm = times[0] || { week: ALL_WEEK };
+    editor.week = tm.week;
+    $('rWeek').replaceChildren(...WEEK_BITS.map((b, i) => chip(WD[lang][i], (tm.week & b) !== 0, on => { editor.week = on ? editor.week | b : editor.week & ~b; })));
+    $('rWeek').querySelectorAll('.chip').forEach(c => { c.disabled = !!editor.keepTimes; });
+    $('rStart').replaceChildren(el('option', { value: '' }, t('anyTime')), ...Array.from({ length: 24 }, (_, h) => el('option', { value: h }, t('fromHour', pad(h)))));
+    $('rRange').replaceChildren(...Array.from({ length: 23 }, (_, i) => el('option', { value: i + 1 }, t('hours', i + 1))));
+    $('rStart').value = tm.start !== undefined ? String(tm.start) : '';
+    $('rRange').value = String(tm.range || 1);
+    $('rRange').disabled = $('rStart').value === '' || !!editor.keepTimes;
+    $('rStart').disabled = !!editor.keepTimes;
+    $('rFree').checked = !!o.isFree;
+    $('rAvoid').checked = !!ro.avoidDuplicate;
+    $('rEnable').checked = rule ? !!ro.enable : true;
+    $('rPreview').replaceChildren();
+    const dlg = $('ruleDlg');
+    if (!dlg.open) dlg.showModal();
+    if (!rule && (pf.keyword || pf.channelIds)) previewRule();
+  }
+  $('rStart').addEventListener('change', () => { $('rRange').disabled = $('rStart').value === ''; });
+  $('rPickChannels').addEventListener('change', renderChannelPicker);
+  $('rChannelFilter').addEventListener('input', renderChannelPicker);
+  $('rCancel').addEventListener('click', () => $('ruleDlg').close());
+
+  function renderChannelPicker() {
+    const pick = $('rPickChannels').checked;
+    $('rChannelBox').hidden = !pick;
+    $('rTypes').style.display = pick ? 'none' : '';
+    if (!pick) return;
+    const q = $('rChannelFilter').value.trim().toLowerCase();
+    const items = [];
+    for (const ty of state.types) {
+      const list = [...state.channels.values()].filter(c => c.channelType === ty && (!q || chName(c).toLowerCase().includes(q)));
+      if (!list.length) continue;
+      items.push(el('div', { class: 'grp' }, ty === 'GR' && lang === 'ja' ? '地デジ' : ty));
+      for (const c of list) {
+        items.push(el('label', null, el('input', { type: 'checkbox', checked: editor.channels.has(c.id),
+          onchange: ev => (ev.currentTarget.checked ? editor.channels.add(c.id) : editor.channels.delete(c.id)) }), chName(c)));
+      }
+    }
+    $('rChannels').replaceChildren(...items);
+  }
+
+  function ruleEdit() {
+    const start = $('rStart').value;
+    let times = [];
+    if (editor.keepTimes) {
+      times = editor.keepTimes;
+    } else if (start !== '') {
+      times = [{ week: editor.week || ALL_WEEK, start: Number(start), range: Number($('rRange').value) }];
+    } else if (editor.week && editor.week !== ALL_WEEK) {
+      times = [{ week: editor.week }];
+    }
+    const pick = $('rPickChannels').checked;
+    return {
+      keyword: $('rKeyword').value.trim(),
+      ignoreKeyword: $('rIgnore').value.trim(),
+      fullText: $('rFullText').checked,
+      types: pick ? [] : [...editor.types],
+      channelIds: pick ? [...editor.channels] : [],
+      genres: editor.genres,
+      times,
+      isFree: $('rFree').checked,
+      enable: $('rEnable').checked,
+      avoidDuplicate: $('rAvoid').checked,
+    };
+  }
+
+  async function previewRule() {
+    const box = $('rPreview');
+    box.replaceChildren(el('div', { class: 'hd' }, t('loading')));
+    try {
+      const now = Date.now();
+      const list = (await api('RulePreview', { method: 'POST', body: ruleEdit() })).filter(p => p.endAt > now).sort((a, b) => a.startAt - b.startAt);
+      box.replaceChildren(
+        el('div', { class: 'hd' + (list.length > 40 ? ' warn' : '') }, list.length ? t('previewCount', list.length) + (list.length > 40 ? ' ' + t('previewMany') : '') : t('previewNone')),
+        ...list.slice(0, 12).map(p => el('div', { class: 'p-row' }, el('span', null, md(p.startAt) + ' ' + hm(p.startAt)), el('b', null, p.name + ' · ' + channelName(p.channelId)))),
+        ...(list.length > 12 ? [el('div', { class: 'p-row' }, el('span'), el('span', null, '…'))] : []));
+    } catch (e) {
+      box.replaceChildren(el('div', { class: 'hd warn' }, t('error', e.message)));
+    }
+  }
+  $('rPreviewBtn').addEventListener('click', previewRule);
+
+  $('rSave').addEventListener('click', async ev => {
+    const btn = ev.currentTarget;
+    btn.disabled = true;
+    try {
+      const body = ruleEdit();
+      if (editor.id === null) await api('Rules', { method: 'POST', body });
+      else await api('Rules/' + editor.id, { method: 'PUT', body });
+      toast(t(editor.id === null ? 'ruleAddedOk' : 'ruleSavedOk', body.keyword || ruleLabel(editor.rule || { searchOption: {} })));
+      $('ruleDlg').close();
+      // EPGStation updates the rule's reservations in the background.
+      if (state.tab === 'rules') await renderRules();
+      setTimeout(() => refreshCurrent().catch(() => {}), 2500);
+    } catch (e) {
+      toast(t('error', e.message), true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  async function openRuleById(ruleId) {
+    try {
+      openRuleEditor(await api('Rules/' + ruleId));
+    } catch (e) {
+      toast(t('error', e.message), true);
+    }
+  }
+
   // ---------- start ----------
   async function start() {
     let serverId = null;
@@ -493,6 +779,8 @@
       return;
     }
     $('who').textContent = status.userName;
+    state.canManageRules = !!status.canManageRules;
+    $('rulesTab').hidden = !state.canManageRules;
     if (!status.allowed) { notice(t('notAllowed'), true); return; }
     if (!status.configured) { notice(t('notConfigured'), true); return; }
     if (!status.connected) { notice(t('notConnected', status.error || ''), true); return; }
@@ -507,7 +795,8 @@
     fillDayHour();
     let tab = 'guide';
     try { tab = localStorage.getItem('epgs-tab') || 'guide'; } catch (e) { /* ignore */ }
-    showTab(['guide', 'search', 'reserves'].includes(tab) ? tab : 'guide');
+    const tabs = ['guide', 'search', 'reserves'].concat(state.canManageRules ? ['rules'] : []);
+    showTab(tabs.includes(tab) ? tab : 'guide');
   }
   start();
 }());

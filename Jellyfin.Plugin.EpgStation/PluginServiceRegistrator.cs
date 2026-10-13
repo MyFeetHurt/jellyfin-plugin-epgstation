@@ -15,5 +15,6 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
     {
         serviceCollection.AddSingleton<EpgStationClient>();
         serviceCollection.AddSingleton<ReservationLog>();
+        serviceCollection.AddSingleton<RuleLog>();
     }
 }

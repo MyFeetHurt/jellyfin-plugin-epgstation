@@ -16,6 +16,7 @@
     <button role="tab" data-tab="guide" data-i18n="guide">Guide</button>
     <button role="tab" data-tab="search" data-i18n="search">Search</button>
     <button role="tab" data-tab="reserves" data-i18n="reserves">Scheduled</button>
+    <button role="tab" data-tab="rules" data-i18n="rules" hidden id="rulesTab">Rules</button>
   </nav>
   <span class="who" id="who"></span>
 </header>
@@ -43,6 +44,14 @@
       <button class="btn" type="submit" data-i18n="search">Search</button>
     </form>
     <div id="searchResults" class="list"></div>
+  </section>
+
+  <section id="tab-rules" class="tab" hidden>
+    <div class="toolbar">
+      <button id="newRule" class="btn" data-i18n="newRule">New rule</button>
+      <button id="reloadRules" class="btn small" data-i18n="reload">Reload</button>
+    </div>
+    <div id="ruleList" class="list"></div>
   </section>
 
   <section id="tab-reserves" class="tab" hidden>
@@ -74,6 +83,53 @@
       <div id="dExt"></div>
     </div>
     <div class="dlg-actions" id="dActions"></div>
+  </form>
+</dialog>
+
+<dialog id="ruleDlg" class="rule-dlg">
+  <form method="dialog" class="dlg" id="ruleForm">
+    <div class="dlg-head">
+      <h2 id="ruleTitle"></h2>
+      <button class="x" value="close" aria-label="Close">&#215;</button>
+    </div>
+    <div class="dlg-body rule-body">
+      <label class="field"><span data-i18n="ruleKeyword">Keyword</span>
+        <input id="rKeyword" type="text" maxlength="200" autocomplete="off"></label>
+      <label class="field"><span data-i18n="ruleIgnore">Exclude</span>
+        <input id="rIgnore" type="text" maxlength="200" autocomplete="off"></label>
+      <label class="check"><input type="checkbox" id="rFullText"> <span data-i18n="inDescription">Description too</span></label>
+
+      <div class="field"><span data-i18n="ruleScope">Channels</span>
+        <div class="chips" id="rTypes"></div>
+        <label class="check"><input type="checkbox" id="rPickChannels"> <span data-i18n="pickChannels">Pick channels</span></label>
+        <div id="rChannelBox" hidden>
+          <input id="rChannelFilter" type="search" data-i18n-placeholder="filterChannels" placeholder="Filter">
+          <div class="chan-list" id="rChannels"></div>
+        </div>
+      </div>
+
+      <div class="field"><span data-i18n="ruleGenres">Genres</span><div class="chips" id="rGenres"></div></div>
+
+      <div class="field"><span data-i18n="ruleWhen">Days and time</span>
+        <div class="chips" id="rWeek"></div>
+        <div class="row-inline">
+          <select id="rStart"></select> <select id="rRange"></select>
+        </div>
+        <div class="note" id="rTimesNote" hidden></div>
+      </div>
+
+      <label class="check"><input type="checkbox" id="rFree"> <span data-i18n="ruleFree">Free programmes only</span></label>
+      <label class="check"><input type="checkbox" id="rAvoid"> <span data-i18n="ruleAvoid">Skip programmes already recorded</span></label>
+      <label class="check"><input type="checkbox" id="rEnable"> <span data-i18n="ruleEnable">Enabled</span></label>
+
+      <div id="rPreview" class="preview"></div>
+    </div>
+    <div class="dlg-actions">
+      <button type="button" class="btn ghost" id="rPreviewBtn" data-i18n="rulePreview">Preview</button>
+      <span style="flex:1"></span>
+      <button type="button" class="btn ghost" value="cancel" id="rCancel" data-i18n="cancelEdit">Cancel</button>
+      <button type="button" class="btn" id="rSave" data-i18n="save">Save</button>
+    </div>
   </form>
 </dialog>
 
