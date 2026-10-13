@@ -4,6 +4,9 @@
   tools/dev/jf.py setup URL            startup wizard (admin) + users family, guest (idempotent)
   tools/dev/jf.py token URL [USER]     print an access token (default admin)
   tools/dev/jf.py configure URL EPGS   set the plugin's EPGStation URL
+  tools/dev/jf.py install URL REPO     add plugin repository REPO (manifest URL), install the plugin
+                                       from it; restart Jellyfin afterwards
+  tools/dev/jf.py plugins URL          list installed plugins
 
 Credentials: ~/.config/jellyfin-epgstation/dev (admin_user/admin_password, user/user_password, user2/...).
 """
@@ -62,6 +65,25 @@ def configure(base, epgs):
     print(json.dumps(call(base, "GET", f"/Plugins/{PLUGIN_ID}/Configuration", token=tok)))
 
 
+def install(base, repo):
+    tok = login(base)["AccessToken"]
+    repos = call(base, "GET", "/Repositories", token=tok)
+    if not any(r["Url"] == repo for r in repos):
+        repos.append({"Name": "EPGStation plugin (dev)", "Url": repo, "Enabled": True})
+        call(base, "POST", "/Repositories", repos, tok)
+    pkgs = call(base, "GET", "/Packages", token=tok)
+    pkg = next(p for p in pkgs if p["guid"].replace("-", "") == PLUGIN_ID.replace("-", ""))
+    print("repository offers:", [(v["version"], v["targetAbi"]) for v in pkg["versions"]])
+    call(base, "POST", f"/Packages/Installed/{pkg['name']}?assemblyGuid={PLUGIN_ID}&repositoryUrl={repo}", token=tok)
+    print("install requested")
+
+
+def plugins(base):
+    tok = login(base)["AccessToken"]
+    for p in call(base, "GET", "/Plugins", token=tok):
+        print(p["Name"], p["Version"], p["Status"])
+
+
 if __name__ == "__main__":
     cmd, base = sys.argv[1], sys.argv[2]
     if cmd == "setup":
@@ -70,3 +92,7 @@ if __name__ == "__main__":
         print(login(base, sys.argv[3] if len(sys.argv) > 3 else "admin")["AccessToken"])
     elif cmd == "configure":
         configure(base, sys.argv[3])
+    elif cmd == "install":
+        install(base, sys.argv[3])
+    elif cmd == "plugins":
+        plugins(base)

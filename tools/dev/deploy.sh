@@ -10,7 +10,7 @@ ssh "$VM" 'set -e; cd ~/src/jellyfin-epgstation
   dotnet build Jellyfin.Plugin.EpgStation -c Release --nologo -v q -clp:NoSummary -warnaserror'
 [ "${1:-}" = build ] && exit 0
 ssh "$VM" 'set -e; cd ~/src/jellyfin-epgstation/Jellyfin.Plugin.EpgStation/bin/Release
-  ver=$(grep -oP "(?<=<AssemblyVersion>)[^<]+" ../../Jellyfin.Plugin.EpgStation.csproj)
+  ver=dev  # plugin folder name; Jellyfin reads the version from the DLL
   # Jellyfin 12 (apt): /var/lib/jellyfin/plugins
   sudo systemctl stop jellyfin
   sudo rm -rf /var/lib/jellyfin/plugins/EPGStation_*
