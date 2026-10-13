@@ -3,3 +3,10 @@ obj/
 .vs/
 .idea/
 artifacts
+
+# Python
+__pycache__/
+*.pyc
+
+# Packaging output
+dist/
