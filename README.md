@@ -32,8 +32,10 @@ Full video (1:43): [demo.mp4](https://cdn.jsdelivr.net/gh/MyFeetHurt/jellyfin-pl
 3. Dashboard → **EPGStation** (in the Plugins menu): enter the EPGStation URL as seen from the
    Jellyfin server, e.g. `http://192.168.0.10:8888`, and press *Save and test connection*.
 
-Manual install: unzip a release zip into a folder in Jellyfin's `plugins` directory
+Manual install: unzip a release zip into a new folder in Jellyfin's `plugins` directory
 (`epgstation_X.Y.Z.11.zip` for 10.11, `epgstation_X.Y.Z.12.zip` for 12.x) and restart Jellyfin.
+The folder must be writable by the user Jellyfin runs as (e.g. `chown -R jellyfin:jellyfin`):
+Jellyfin 12 does not start when it cannot write the plugin's `meta.json`.
 
 ## Use
 
