@@ -1,0 +1,57 @@
+# Push a tag vX.Y.Z (= <PluginVersion> in the csproj, with a "## X.Y.Z" entry in CHANGELOG.md):
+# builds both Jellyfin lines, creates the GitHub release with the zips and adds the versions to
+# manifest.json on main, which is the plugin repository URL users add to Jellyfin.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Check the tag
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          grep -q "<PluginVersion>$version</PluginVersion>" Jellyfin.Plugin.EpgStation/Jellyfin.Plugin.EpgStation.csproj \
+            || { echo "csproj PluginVersion is not $version"; exit 1; }
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "tag is not on main"; exit 1; }
+          git checkout -q "$GITHUB_SHA"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build
+        run: dotnet build Jellyfin.Plugin.EpgStation -c Release -warnaserror
+      - name: Package
+        run: |
+          git show origin/main:manifest.json > /tmp/manifest.json 2>/dev/null || echo '[]' > /tmp/manifest.json
+          python3 tools/package.py --manifest /tmp/manifest.json --out dist \
+            --base-url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}"
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          python3 - "$version" > /tmp/notes.md <<'EOF'
+          import re, sys
+          text = open("CHANGELOG.md").read()
+          print(re.search(rf"^## {re.escape(sys.argv[1])}\b.*?\n(.*?)(?=^## |\Z)", text, re.S | re.M).group(1).strip())
+          EOF
+          gh release create "$GITHUB_REF_NAME" dist/*.zip --title "$GITHUB_REF_NAME" --notes-file /tmp/notes.md
+      - name: Update manifest.json on main
+        run: |
+          git checkout -q main
+          cp dist/manifest.json manifest.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "manifest: $GITHUB_REF_NAME"
+          git push origin main

@@ -13,13 +13,13 @@ ssh "$VM" 'set -e; cd ~/src/jellyfin-epgstation/Jellyfin.Plugin.EpgStation/bin/R
   ver=dev  # plugin folder name; Jellyfin reads the version from the DLL
   # Jellyfin 12 (apt): /var/lib/jellyfin/plugins
   sudo systemctl stop jellyfin
-  sudo rm -rf /var/lib/jellyfin/plugins/EPGStation_*
+  sudo sh -c "rm -rf /var/lib/jellyfin/plugins/EPGStation_*"  # glob as root: media1 cannot list it
   sudo install -D -o jellyfin -g jellyfin -m 644 net10.0/Jellyfin.Plugin.EpgStation.dll /var/lib/jellyfin/plugins/EPGStation_$ver/Jellyfin.Plugin.EpgStation.dll
   sudo chown -R jellyfin:jellyfin /var/lib/jellyfin/plugins/EPGStation_$ver  # an unwritable plugin dir (meta.json) stops Jellyfin 12 from starting
   sudo systemctl start jellyfin
   # Jellyfin 10.11 (docker): /srv/jellyfin1011/config/plugins
   sudo docker stop -t 20 jellyfin1011 >/dev/null
-  sudo rm -rf /srv/jellyfin1011/config/plugins/EPGStation_*
+  sudo sh -c "rm -rf /srv/jellyfin1011/config/plugins/EPGStation_*"
   sudo install -D -m 644 net9.0/Jellyfin.Plugin.EpgStation.dll /srv/jellyfin1011/config/plugins/EPGStation_$ver/Jellyfin.Plugin.EpgStation.dll
   sudo docker start jellyfin1011 >/dev/null
   for port in 8096 8097; do

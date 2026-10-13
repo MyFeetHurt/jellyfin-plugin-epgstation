@@ -29,6 +29,18 @@ out.mkdir(parents=True, exist_ok=True)
 name, pw = {"admin": ("admin_user", "admin_password"), "family": ("user", "user_password"),
             "guest": ("user2", "user2_password")}[who]
 
+def sign_in(pg, user, password):
+    """jellyfin-web login: public user cards first (then 'Manual login') or the form directly."""
+    pg.goto(base + "/web/#/login", wait_until="networkidle")
+    pg.wait_for_selector("#txtManualName:visible, button.btnManual:visible", timeout=30000)
+    if not pg.locator("#txtManualName").is_visible():
+        pg.locator("button.btnManual").click()
+    pg.fill("#txtManualName", user)
+    pg.fill("#txtManualPassword", password)
+    pg.locator("#txtManualPassword").press("Enter")
+    pg.wait_for_function("() => !location.hash.includes('login')", timeout=20000)
+
+
 def write_test(pg):
     pg.locator('.tabs button[data-tab="guide"]').click()
     pg.locator("#types button").first.click()  # GR
@@ -70,13 +82,7 @@ def write_test(pg):
 def admin_page(b):
     ctx = b.new_context(viewport={"width": 1300, "height": 1000})
     pg = ctx.new_page()
-    pg.goto(base + "/web/#/login", wait_until="networkidle")
-    if pg.locator("#txtManualName").count() == 0 or not pg.locator("#txtManualName").is_visible():
-        pg.locator("button.btnManual").click()
-    pg.fill("#txtManualName", CRED["admin_user"])
-    pg.fill("#txtManualPassword", CRED["admin_password"])
-    pg.locator("#txtManualPassword").press("Enter")
-    pg.wait_for_function("() => !location.hash.includes('login')", timeout=20000)
+    sign_in(pg, CRED["admin_user"], CRED["admin_password"])
     pg.goto(base + "/web/#/configurationpage?name=EpgStationConfig", wait_until="networkidle")
     pg.wait_for_function("() => { const i = document.querySelector('#EpgStationUrl'); return i && i.value; }", timeout=20000)
     pg.wait_for_selector("#epgsUsers label", state="attached")  # hidden while "all users" is on
@@ -93,13 +99,7 @@ with sync_playwright() as p:
     pg = b.new_page(viewport={"width": 1400, "height": 900}, locale="ja-JP")
     errors = []
     pg.on("pageerror", lambda e: errors.append(str(e)))
-    pg.goto(base + "/web/#/login", wait_until="networkidle")
-    if pg.locator("#txtManualName").count() == 0 or not pg.locator("#txtManualName").is_visible():
-        pg.locator("button.btnManual").click()
-    pg.fill("#txtManualName", CRED[name])
-    pg.fill("#txtManualPassword", CRED[pw])
-    pg.locator("#txtManualPassword").press("Enter")
-    pg.wait_for_function("() => !location.hash.includes('login')", timeout=20000)
+    sign_in(pg, CRED[name], CRED[pw])
     pg.goto(base + "/EpgStation/Web/", wait_until="networkidle")
     pg.wait_for_selector(".g-col .p", timeout=30000)
     print("guide columns:", pg.locator(".g-col").count(), "programmes:", pg.locator(".g-col .p").count())

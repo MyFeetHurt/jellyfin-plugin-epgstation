@@ -43,12 +43,16 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         return
         [
-            // Settings (dashboard → Plugins → EPGStation).
+            // Settings, also listed in the dashboard menu (administrators only) with a link to the
+            // user page. A second menu page would hijack the plugin's "Settings" button: jellyfin-web
+            // opens the first page with EnableInMainMenu there.
             new PluginPageInfo
             {
                 Name = "EpgStationConfig",
                 DisplayName = "EPGStation",
                 EmbeddedResourcePath = GetType().Namespace + ".Configuration.configPage.html",
+                EnableInMainMenu = true,
+                MenuIcon = "fiber_smart_record",
             },
         ];
     }
