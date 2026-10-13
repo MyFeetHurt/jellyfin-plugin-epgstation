@@ -26,7 +26,7 @@
       ruleHint: 'Scheduled by an EPGStation rule.', conflictHint: 'No free tuner: this will not record unless another recording is cancelled.',
       skipHint: 'Skipped: a rule matched this programme but it will not record.',
       overlapHint: 'Already recorded by another reservation.', recordingHint: 'Recording now.',
-      today: 'Today', tomorrow: 'Tomorrow', min: '{0} min',
+      today: 'Today', tomorrow: 'Tomorrow', min: '{0} min', yes: 'Yes', no: 'No',
       'err.ReservationManageModelAddReserveConflict': 'No free tuner at that time: it conflicts with other recordings.',
       'err.ReservationManageModelCheckReservedProgramError': 'This programme is already scheduled.',
       'err.ReservationManageModelReservedError': 'This programme is already scheduled.',
@@ -50,7 +50,7 @@
       ruleHint: 'EPGStation のルールによる予約です。', conflictHint: 'チューナーが足りません。他の予約を取り消さないと録画されません。',
       skipHint: '除外: ルールに一致しましたが録画しません。',
       overlapHint: '他の予約で録画されるため重複しています。', recordingHint: '録画中です。',
-      today: '今日', tomorrow: '明日', min: '{0}分',
+      today: '今日', tomorrow: '明日', min: '{0}分', yes: 'はい', no: 'いいえ',
       'err.ReservationManageModelAddReserveConflict': 'チューナーが足りません（他の予約と競合します）。',
       'err.ReservationManageModelCheckReservedProgramError': 'この番組はすでに予約されています。',
       'err.ReservationManageModelReservedError': 'この番組はすでに予約されています。',
@@ -114,17 +114,20 @@
   }
 
   // ---------- auth + API ----------
-  function token() {
+  // jellyfin-web keeps one entry per server it signed in to; use this server's (by server Id).
+  function token(serverId) {
     try {
       const creds = JSON.parse(localStorage.getItem('jellyfin_credentials') || '{}');
       const servers = (creds.Servers || []).filter(s => s.AccessToken);
+      const own = servers.find(s => serverId && s.Id === serverId);
+      if (own) return own.AccessToken;
       servers.sort((a, b) => (b.DateLastAccessed || 0) - (a.DateLastAccessed || 0));
       return servers.length ? servers[0].AccessToken : null;
     } catch (e) {
       return null;
     }
   }
-  const TOKEN = token();
+  let TOKEN = null;
 
   async function api(path, opts = {}) {
     const headers = { Authorization: 'MediaBrowser Client="EPGStation plugin page", Token="' + TOKEN + '"' };
@@ -352,6 +355,20 @@
     }
   }
 
+  // In-page yes/no (the browser's confirm() is plain and blocked in some embedded views).
+  function ask(msg) {
+    const dlg = $('ask');
+    $('askText').textContent = msg;
+    $('askYes').textContent = t('yes');
+    $('askNo').textContent = t('no');
+    return new Promise(resolve => {
+      dlg.addEventListener('close', () => resolve(dlg.returnValue === 'yes'), { once: true });
+      dlg.returnValue = '';
+      dlg.showModal();
+      $('askNo').focus();
+    });
+  }
+
   async function addReserve(p) {
     await api('Reserves', { method: 'POST', body: { programId: p.id } });
     toast(t('scheduledOk', p.name));
@@ -359,7 +376,7 @@
   async function cancelReserve(r) {
     const recording = isRecordingNow(r);
     const msg = recording ? t('confirmStop', r.name) : r.ruleId ? t('confirmSkip', r.name) : t('confirmCancel', r.name);
-    if (!confirm(msg)) return false;
+    if (!await ask(msg)) return false;
     await api('Reserves/' + r.id, { method: 'DELETE' });
     toast(recording ? t('stoppedOk', r.name) : t('cancelledOk', r.name));
     return true;
@@ -451,6 +468,11 @@
 
   // ---------- start ----------
   async function start() {
+    let serverId = null;
+    try {
+      serverId = (await (await fetch('../../System/Info/Public')).json()).Id;
+    } catch (e) { /* fall back to the newest sign-in */ }
+    TOKEN = token(serverId);
     if (!TOKEN) {
       notice(t('notSignedIn'), true, { href: '../../web/', text: t('signIn') });
       return;

@@ -143,6 +143,10 @@ dialog::backdrop { background: rgba(0, 0, 0, .6); }
 .dlg-body p { margin: 0; }
 .dlg-actions { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 16px; border-top: 1px solid var(--line); }
 
+dialog.ask { width: min(460px, calc(100vw - 32px)); }
+.ask p { margin: 0; padding: 20px 20px 8px; font-size: 15px; line-height: 1.6; }
+.ask .dlg-actions { border-top: 0; }
+
 .toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 10;
   background: #333; color: #fff; padding: 10px 16px; border-radius: 8px; box-shadow: 0 4px 16px #000a;

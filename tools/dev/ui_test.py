@@ -73,8 +73,10 @@ def write_test(pg):
     row.wait_for()
     print("listed:", row.inner_text().replace("\n", " | "))
     pg.screenshot(path=str(out / "reserves-one.png"))
-    pg.once("dialog", lambda d: (print("confirm:", d.message), d.accept()))
     row.locator("button").click()
+    pg.wait_for_selector("#ask[open]")
+    print("confirm:", pg.locator("#askText").inner_text())
+    pg.locator("#askYes").click()
     pg.wait_for_function("t => ![...document.querySelectorAll('#reserveList .row')].some(r => r.innerText.includes(t))", arg=title)
     print("cancelled; toast:", pg.locator(".toast").inner_text())
 
