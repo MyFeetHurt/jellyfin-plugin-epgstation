@@ -4,7 +4,7 @@
   tools/package.py --base-url URL [--manifest manifest.json] [--out dist]
 
 Expects `dotnet build -c Release` output in Jellyfin.Plugin.EpgStation/bin/Release/{net9.0,net10.0}.
-Writes dist/epgstation_<version>.zip per Jellyfin line (DLL + meta.json, fixed timestamps so the
+Writes dist/epgstation_<version>.zip per Jellyfin line (DLL, meta.json, epgstation.png; fixed timestamps so the
 same build gives the same zip) and dist/manifest.json: the given manifest (or an empty one) plus
 this release's versions, whose sourceUrl is <URL>/<zip name>. A version already in the manifest
 is replaced. Version and ABI come from the csproj; the changelog from CHANGELOG.md's first entry.
@@ -28,6 +28,10 @@ DESCRIPTION = ("Browse the EPGStation guide, search programmes, and schedule or 
                "from a page inside Jellyfin. Administrators choose which Jellyfin users may use it. "
                "No playback: recordings stay in EPGStation (add its recording folder as a library).")
 # TFM -> 4th version field (Jellyfin line). See the csproj.
+# Bundled as epgstation.png (meta.json imagePath). Jellyfin also downloads imageUrl into the plugin
+# folder under the URL's file name (plugin.png): different names, so neither overwrites the other.
+IMAGE = ROOT / "assets/plugin.png"
+IMAGE_URL = "https://raw.githubusercontent.com/MyFeetHurt/jellyfin-plugin-epgstation/main/assets/plugin.png"
 BUILDS = {"net9.0": ("11", "10.11.0.0"), "net10.0": ("12", "12.0.0.0")}
 ZIP_TIME = (2020, 1, 1, 0, 0, 0)
 
@@ -63,7 +67,7 @@ def main():
     if entry is None:
         entry = {"guid": GUID, "versions": []}
         manifest.append(entry)
-    entry.update(name=NAME, description=DESCRIPTION, overview=OVERVIEW, owner=OWNER, category=CATEGORY)
+    entry.update(name=NAME, description=DESCRIPTION, overview=OVERVIEW, owner=OWNER, category=CATEGORY, imageUrl=IMAGE_URL)
 
     for tfm, (line, abi) in BUILDS.items():
         full = f"{version}.{line}"
@@ -72,12 +76,13 @@ def main():
             "category": CATEGORY, "changelog": notes, "description": DESCRIPTION, "guid": GUID,
             "name": NAME, "overview": OVERVIEW, "owner": OWNER, "targetAbi": abi,
             "timestamp": stamp, "version": full, "status": "Active", "autoUpdate": True,
-            "imagePath": "", "assemblies": ["Jellyfin.Plugin.EpgStation.dll"],
+            "imagePath": "epgstation.png", "assemblies": ["Jellyfin.Plugin.EpgStation.dll"],
         }
         zpath = out / f"epgstation_{full}.zip"
         with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
             for name, data in (("Jellyfin.Plugin.EpgStation.dll", dll.read_bytes()),
-                               ("meta.json", json.dumps(meta, indent=2).encode())):
+                               ("meta.json", json.dumps(meta, indent=2).encode()),
+                               ("epgstation.png", IMAGE.read_bytes())):
                 info = zipfile.ZipInfo(name, ZIP_TIME)
                 info.compress_type = zipfile.ZIP_DEFLATED
                 info.external_attr = 0o644 << 16
