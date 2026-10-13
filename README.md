@@ -9,7 +9,7 @@ want to watch them in Jellyfin).
 
 ![Scheduling a recording from the guide, search and the reservation list, then on a phone](docs/demo.gif)
 
-Full video (1:32): [demo.mp4](https://cdn.jsdelivr.net/gh/MyFeetHurt/jellyfin-plugin-epgstation@main/docs/demo.mp4) · Screenshots: [guide](docs/guide.png) / [programme](docs/detail.png) / [reservations](docs/reserves.png) / [phone](docs/phone.png) / [settings](docs/settings.png)
+Full video (1:43): [demo.mp4](https://cdn.jsdelivr.net/gh/MyFeetHurt/jellyfin-plugin-epgstation@main/docs/demo.mp4) · Screenshots: [guide](docs/guide.png) / [programme](docs/detail.png) / [reservations](docs/reserves.png) / [phone](docs/phone.png) / [settings](docs/settings.png)
 
 ## Features
 
