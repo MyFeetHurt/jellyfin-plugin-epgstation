@@ -118,7 +118,7 @@ with sync_playwright() as p:
     print("search rows:", pg.locator("#searchResults .row").count())
     pg.screenshot(path=str(out / "search.png"))
     pg.locator('.tabs button[data-tab="reserves"]').click()
-    pg.wait_for_selector("#reserveList .row, #reserveList .empty")
+    pg.wait_for_selector("#reserveList .row, #reserveList .empty:not(:has-text('…'))")  # not the loading text
     print("reservation rows:", pg.locator("#reserveList .row").count())
     pg.screenshot(path=str(out / "reserves.png"))
     mob = b.new_page(viewport={"width": 390, "height": 844}, locale="ja-JP", storage_state=pg.context.storage_state())
